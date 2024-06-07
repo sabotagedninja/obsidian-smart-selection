@@ -1,0 +1,11 @@
+{
+	"id": "DEV-extend-selection",
+	"name": "DEV Extend Selection",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Use Extend Selection to quickly select text surrounding your cursor by pressing Ctrl+A multiple times (or less using Ctrl+Shift+A)",
+	"author": "sabotagedninja",
+	"authorUrl": "https://obsidian.md",
+	"fundingUrl": "https://obsidian.md/pricing",
+	"isDesktopOnly": true
+}
