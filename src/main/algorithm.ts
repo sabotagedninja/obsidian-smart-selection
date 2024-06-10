@@ -68,6 +68,16 @@ export function expand(selection: Caret | Selection): Selection {
     const charTypeEnd = getCharType(text.charAt(selectionEnd))
     var charType: CharType
 
+    /*
+    Word:
+        from caret to word boundary
+    Sentence:
+        \n | .
+    Line:
+    Paragraph:
+    Document:
+    */
+
     if (charTypeStart == CharType.CHARACTER || charTypeEnd == CharType.CHARACTER) {
         charType = CharType.CHARACTER
     } else if (charTypeStart == CharType.WHITESPACE || charTypeEnd == CharType.WHITESPACE) {

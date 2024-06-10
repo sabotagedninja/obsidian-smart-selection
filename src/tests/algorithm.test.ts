@@ -30,18 +30,30 @@ describe('expand', () => {
     })
     describe('One selection, two carets', () => {
         test('selection 1', () => expect(_expand('a|a|a')).toBe('aaa'))
-        test('selection 1', () => expect(_expand('a |b|b')).toBe('bb'))
-        test('selection 1', () => expect(_expand('a |bb|')).toBe(' bb'))
+        test('selection 2', () => expect(_expand('a |b|b')).toBe('bb'))
+        test('selection 3', () => expect(_expand('a |bb|')).toBe(' bb'))
         // FIXME this process takes too many steps! Spaces should not be selected in individual steps.
         // Proposition - selection steps: word, sentence in a line, line, paragraph, everything
-        test('selection 1', () => expect(_expand('a. b c|c |d. e')).toBe('cc d'))
-        test('selection 1', () => expect(_expand('a. b |cc d|. e')).toBe(' cc d'))
-        test('selection 1', () => expect(_expand('a. b| cc d|. e')).toBe('b cc d'))
-        test('selection 1', () => expect(_expand('a. |b cc d|. e')).toBe(' b cc d'))
-        test('selection 1', () => expect(_expand('a.| b cc d|. e')).toBe('. b cc d.'))
-        test('selection 1', () => expect(_expand('a|. b cc d.| e')).toBe('a. b cc d.'))
-        test('selection 1', () => expect(_expand('|a. b cc d.| e')).toBe('a. b cc d. '))
-        test('selection 1', () => expect(_expand('|a. b cc d. |e')).toBe('a. b cc d. e'))
+        test('continues selection 1 - TOO MANY STEPS', () => expect(_expand('a. b c|c d. e')).toBe('cc'))
+        test('continues selection 2 - TOO MANY STEPS', () => expect(_expand('a. b |cc| d. e')).toBe(' cc '))
+        test('continues selection 3 - TOO MANY STEPS', () => expect(_expand('a. b| cc |d. e')).toBe('b cc d'))
+        test('continues selection 4 - TOO MANY STEPS', () => expect(_expand('a. |b cc d|. e')).toBe(' b cc d'))
+        test('continues selection 5 - TOO MANY STEPS', () => expect(_expand('a.| b cc d|. e')).toBe('. b cc d.'))
+        test('continues selection 6 - TOO MANY STEPS', () => expect(_expand('a|. b cc d.| e')).toBe('a. b cc d.'))
+        test('continues selection 7 - TOO MANY STEPS', () => expect(_expand('|a. b cc d.| e')).toBe('a. b cc d. '))
+        test('continues selection 8 - TOO MANY STEPS', () => expect(_expand('|a. b cc d. |e')).toBe('a. b cc d. e'))
+        // ---
+        test('continues selection 1 - LESS STEPS', () => 
+            expect(_expand('Document. \n\n Paragraph. \n Line. Sentence wo|rd. \n')).toBe('word'))
+        test('continues selection 2 - LESS STEPS', () => 
+            expect(_expand('Document. \n\n Paragraph. \n Line. Sentence |word|. \n')).toBe('Sentence word.'))
+        test('continues selection 3 - LESS STEPS', () => 
+            expect(_expand('Document. \n\n Paragraph. \n Line. |Sentence word.| \n')).toBe('Line. Sentence word. \n'))
+        test('continues selection 3 - LESS STEPS', () => 
+            expect(_expand('Document. \n\n Paragraph. \n |Line. Sentence word. \n|')).toBe('Paragraph. \n Line. Sentence word. \n'))
+        test('continues selection 4 - LESS STEPS', () => 
+            expect(_expand('Document. \n\n |Paragraph. \n Line. Sentence word. \n|')).toBe('Document. \n\n Paragraph 1. \n Sentence word. \n'))
+
     })
 })
 
