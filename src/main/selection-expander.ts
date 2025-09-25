@@ -12,10 +12,13 @@ const DEFAULT_SETTINGS: SelectionExpanderPluginSettings = {
   mySetting: 'default'
 }
 
+type EditorPositionRange = {
+  start: { line: number; ch: number };
+  end: { line: number; ch: number };
+};
+
 export default class SelectionExpanderPlugin extends Plugin {
   settings: SelectionExpanderPluginSettings;
-
-  private anchorPos: EditorPosition | null = null;
 
   async onload() {
 
@@ -49,14 +52,115 @@ export default class SelectionExpanderPlugin extends Plugin {
     // nothing special
   }
 
+  private editor: Editor | null;
+  private selection: string | null;
+  private anchorPos: EditorPosition | null;
+  private fromPos: EditorPosition | null;
+  private toPos: EditorPosition | null;
+  private lineRange: EditorPositionRange | null;
+  private paragraphRange: EditorPositionRange | null;
+  private docRange: EditorPositionRange | null;
+
+  // Using CodeMirror-style API
+
+  private expandSelectionCycle() {
+    if (!this.initSelectionState())
+      return;
+
+    if (this.isCaret()) {
+      this.expandToLine();
+
+    } else if (this.isLineSelected(this.fromPos, this.toPos, this.lineRange) && !this.isParapraphSelected(this.fromPos, this.toPos, this.paragraphRange)) {
+      this.expandToParagraph();
+
+    } else if (this.isParapraphSelected(this.fromPos, this.toPos, this.paragraphRange)) {
+      this.expandToDocument();
+    }
+  }
+
+  private shrinkSelectionCycle() {
+    if (!this.initSelectionState())
+      return;
+    if (!this.anchorPos)
+      return;
+
+    // const from = editor.getCursor('from');
+    // const to = editor.getCursor('to');
+    // const lineRange = this.getLineRange(this.anchorPos);
+    // const paragraphRange = this.getParagraphRange(this.anchorPos);
+    // const docRange = this.getDocRange();
+
+    if (this.isDocumentSelected(this.fromPos, this.toPos, this.docRange)) {
+      this.shrinkToParagraph(this.paragraphRange);
+      
+    } else if (this.isParapraphSelected(this.fromPos, this.toPos, this.paragraphRange) && !this.isLineSelected(this.fromPos, this.toPos, this.lineRange)) {
+      this.shrinkToLine(this.lineRange);
+      
+    } else if (this.isLineSelected(this.fromPos, this.toPos, this.lineRange)) {
+        this.shrinkToCaret(this.anchorPos);
+        this.anchorPos = null;
+    }
+  }
+ 
+  private initSelectionState(): boolean {
+    this.editor = this.getActiveEditor();    
+    if(!this.editor) 
+      return false;
+
+    this.selection = this.editor.getSelection();
+    this.fromPos = this.editor.getCursor('from');
+    this.toPos = this.editor.getCursor('to');
+    
+    console.log("sel", JSON.stringify(this.selection));
+    console.log("from", JSON.stringify(this.fromPos));
+    console.log("to", JSON.stringify(this.toPos));
+
+    // States: caret, line, paragraph, document
+
+    if (this.isCaret()) {
+      this.anchorPos = this.fromPos;
+    }
+    this.lineRange = this.getLineRange(this.anchorPos);
+    this.paragraphRange = this.getParagraphRange(this.anchorPos);
+    this.docRange = this.getDocRange();
+
+    console.log("anchorPos", JSON.stringify(this.anchorPos));
+    console.log("isCaret: ", JSON.stringify(this.isCaret()));
+    console.log("lineRange: ", JSON.stringify(this.lineRange));
+    console.log("paragraphRange: ", JSON.stringify(this.paragraphRange));
+    console.log("docRange: ", JSON.stringify(this.docRange));
+
+    return true;
+  }
+  
+  private expandToDocument() {
+    console.log(">> Current selection: paragraph >> Expand selection to document");
+    this.setSelection(this.docRange.start, this.docRange.end);
+  }
+
+  private expandToParagraph() {
+    console.log(">> Current selection: line >> Expand selection to paragraph");
+    this.setSelection(this.paragraphRange.start, this.paragraphRange.end);
+  }
+
+  private expandToLine() {
+    console.log(">> Current selection: none >> Expand selection to line");
+    this.editor.setSelection(this.lineRange.start, this.lineRange.end);
+  }
+
+  private isCaret() {
+    return this.selection.length === 0;
+  }
+
+  
   private getActiveEditor(): Editor | null {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!view) return null;
     return (view as MarkdownView).editor;
   }
 
-  private setSelection(editor: Editor, start: EditorPosition, end: EditorPosition) {
-    editor.setSelection(start, end);
+  private setSelection(start: EditorPosition, end: EditorPosition) {
+    this.editor.setSelection(start, end);
     console.log("---");
   }
 
@@ -64,127 +168,68 @@ export default class SelectionExpanderPlugin extends Plugin {
     return a.line === b.line && a.ch === b.ch;
   }
 
-  // CodeMirror-style API
-  private expandSelectionCycle() {
-    const editor = this.getActiveEditor();
-    if (!editor) return;
-
-    const sel = editor.getSelection();
-    const from = editor.getCursor('from');
-    const to = editor.getCursor('to');
-
-    console.log("sel", JSON.stringify(sel));
-    console.log("from", JSON.stringify(from));
-    console.log("to", JSON.stringify(to));
-
-    // States: caret, line, paragraph, document
-    // Determine current state
-    const isCaret = sel.length === 0;
-    const lineRange = this.getLineRange(editor, from);
-    const paragraphRange = this.getParagraphRange(editor, from);
-    const docRange = this.getDocRange(editor);
-
-    if (isCaret) {
-      this.anchorPos = from;
-    }
-    console.log("isCaret: ", JSON.stringify(isCaret));
-    console.log("lineRange: ", JSON.stringify(lineRange));
-    console.log("paragraphRange: ", JSON.stringify(paragraphRange));
-    console.log("docRange: ", JSON.stringify(docRange));
-
-    // If caret, expand to line
-    if (isCaret) {
-      console.log(">> Current selection: none >> Expand selection to line");
-      this.setSelection(editor, lineRange.start, lineRange.end);
-      return;
-    }
-
-    // If selection equals line, expand to paragraph
-    if (this.rangeEquals(from, to, lineRange.start, lineRange.end) && !this.rangeEquals(from, to, paragraphRange.start, paragraphRange.end)) {
-      console.log(">> Current selection: line >> Expand selection to paragraph");
-      this.setSelection(editor, paragraphRange.start, paragraphRange.end);
-      return;
-    }
-
-    // If selection equals paragraph, expand to document
-    if (this.rangeEquals(from, to, paragraphRange.start, paragraphRange.end)) {
-      console.log(">> Current selection: paragraph >> Expand selection to document");
-      this.setSelection(editor, docRange.start, docRange.end);
-      return;
-    }
+  private isLineSelected(from: EditorPosition, to: EditorPosition, lineRange: EditorPositionRange) {
+    return this.rangeEquals(from, to, lineRange.start, lineRange.end);
+  }
+  
+  private isParapraphSelected(from: EditorPosition, to: EditorPosition, paragraphRange: EditorPositionRange) {
+    return this.rangeEquals(from, to, paragraphRange.start, paragraphRange.end);
   }
 
-  private shrinkSelectionCycle() {
-    const editor = this.getActiveEditor();
-    if (!editor) return;
-
-    if (!this.anchorPos) return;
-
-    const from = editor.getCursor('from');
-    const to = editor.getCursor('to');
-    const lineRange = this.getLineRange(editor, this.anchorPos);
-    const paragraphRange = this.getParagraphRange(editor, this.anchorPos);
-    const docRange = this.getDocRange(editor);
-
-    // If whole document selected, shrink to paragraph
-    if (this.rangeEquals(from, to, docRange.start, docRange.end)) {
-      this.setSelection(editor, paragraphRange.start, paragraphRange.end);
-      return;
-    }
-
-    // If paragraph selected, shrink to line
-    if (this.rangeEquals(from, to, paragraphRange.start, paragraphRange.end) && !this.rangeEquals(from, to, lineRange.start, lineRange.end)) {
-      this.setSelection(editor, lineRange.start, lineRange.end);
-      return;
-    }
-
-    // If line selected, shrink to caret at original position
-    if (this.rangeEquals(from, to, lineRange.start, lineRange.end)) {
-      if (this.anchorPos) {
-        editor.setCursor(this.anchorPos);
-        this.anchorPos = null; // reset anchor after returning to caret
-      } else {
-        editor.setCursor(lineRange.start);
-      }
-      return;
-    }
+  private isDocumentSelected(from: EditorPosition, to: EditorPosition, docRange: EditorPositionRange) {
+    return this.rangeEquals(from, to, docRange.start, docRange.end);
+  }
+  
+  private rangeEquals(aFrom: EditorPosition, aTo: EditorPosition, bFrom: EditorPosition, bTo: EditorPosition) {
+    return this.posIsEqual(aFrom, bFrom) && this.posIsEqual(aTo, bTo);
   }
 
-  private getLineRange(editor: Editor, pos: EditorPosition) {
-    const lineText = editor.getLine(pos.line);
+  private shrinkToParagraph(paragraphRange: EditorPositionRange) {
+    this.editor.setSelection(paragraphRange.start, paragraphRange.end);
+  }
+  
+  private shrinkToLine(lineRange: EditorPositionRange) {
+    this.editor.setSelection(lineRange.start, lineRange.end);
+  }
+
+  private shrinkToCaret(pos: EditorPosition) {
+    this.editor.setCursor(pos);
+  }
+
+  private getLineRange(pos: EditorPosition) : EditorPositionRange {
+    const lineText = this.editor.getLine(pos.line);
     return {
       start: { line: pos.line, ch: 0 },
       end: { line: pos.line, ch: lineText.length }
     };
   }
 
-  private getParagraphRange(editor: Editor, pos: EditorPosition) {
-    const maxLine = editor.lineCount() - 1;
+  private getParagraphRange(pos: EditorPosition) : EditorPositionRange {
+    const maxLine = this.editor.lineCount() - 1;
     // find start
     let startLine = pos.line;
     while (startLine > 0) {
-      const text = editor.getLine(startLine - 1);
+      const text = this.editor.getLine(startLine - 1);
       if (text.trim() === '') break;
       startLine--;
     }
     // find end
     let endLine = pos.line;
     while (endLine < maxLine) {
-      const text = editor.getLine(endLine + 1);
+      const text = this.editor.getLine(endLine + 1);
       if (text.trim() === '') break;
       endLine++;
     }
     const start = { line: startLine, ch: 0 };
-    const end = { line: endLine, ch: editor.getLine(endLine).length };
+    const end = { line: endLine, ch: this.editor.getLine(endLine).length };
     return { start, end };
   }
   
-  private getDocRange(editor: Editor) {
-    return { start: { line: 0, ch: 0 }, end: { line: editor.lineCount() - 1, ch: editor.getLine(editor.lineCount() - 1).length } };
-  }
-
-  private rangeEquals(aFrom: EditorPosition, aTo: EditorPosition, bFrom: EditorPosition, bTo: EditorPosition) {
-    return this.posIsEqual(aFrom, bFrom) && this.posIsEqual(aTo, bTo);
+  private getDocRange() : EditorPositionRange {
+    return { 
+      start: { line: 0, ch: 0 }, 
+      end: { line: this.editor.lineCount() - 1, ch: this.editor.getLine(this.editor.lineCount() - 1).length } 
+    };
   }
 }
 
@@ -197,14 +242,4 @@ Notes:
   - manifest.json (with id, name, version, main)
   - package.json and a build step to compile TypeScript to JS
 
-manifest.json example:
-{
-  "id": "obsidian-selection-expander",
-  "name": "Selection Expander",
-  "version": "0.1.0",
-  "minAppVersion": "0.12.0",
-  "description": "Cycle selection from caret to line, paragraph, and document with repeated Ctrl+A.",
-  "author": "(your name)",
-  "main": "main.js"
-}
 */
