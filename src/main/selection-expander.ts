@@ -12,9 +12,19 @@ const DEFAULT_SETTINGS: SelectionExpanderPluginSettings = {
   mySetting: 'default'
 }
 
-type EditorPositionRange = {
-  start: { line: number; ch: number };
-  end: { line: number; ch: number };
+type SelectionState = {
+      selection: string,
+      from: number,
+      to: number,
+      anchor: number,
+      lineRange: SelectionRange,
+      paragraphRange: SelectionRange,
+      documentRange: SelectionRange,
+}
+
+type SelectionRange = {
+  start: number;
+  end: number;
 };
 
 export default class SelectionExpanderPlugin extends Plugin {
@@ -51,187 +61,256 @@ export default class SelectionExpanderPlugin extends Plugin {
   onunload() {
     // nothing special
   }
-
-  private editor: Editor | null;
-  private selection: string | null;
-  private anchorPos: EditorPosition | null;
-  private fromPos: EditorPosition | null;
-  private toPos: EditorPosition | null;
-  private lineRange: EditorPositionRange | null;
-  private paragraphRange: EditorPositionRange | null;
-  private docRange: EditorPositionRange | null;
+  
 
   // Using CodeMirror-style API
+  
+  // A line consists of multiple sentences followed by a newline character.
+  // A paragraph consists of one or more lines. A paragraph is surrounded by a blank line or a header.
+  
+  private anchor: number | null;
 
   private expandSelectionCycle() {
-    if (!this.initSelectionState())
-      return;
+    const $ = this; // scope variable for nested functions
+    const editor = this.getActiveEditor();
+    if (!editor) return;
+    
+    const state = this.getState(editor);
 
-    if (this.isCaret()) {
-      this.expandToLine();
+    log();
 
-    } else if (this.isLineSelected(this.fromPos, this.toPos, this.lineRange) && !this.isParapraphSelected(this.fromPos, this.toPos, this.paragraphRange)) {
-      this.expandToParagraph();
+    
+    if (nothingSelected()) {
+      selectLine();
+      if (nothingSelected()) { // Blank line
+        selectParagraph();
+        if (nothingSelected()) { // Multiple blank lines
+          selectDocument();
+        }
+      }
+    } else if (partialLineSelected()) {
+      selectLine();
+      
+    } else if (entireLineSelected()) {
+      selectParagraph();
+      if (nothingSelected()) { // Multiple blank lines
+        selectDocument();
+      }
+    } else if (partialParapraphSelected()) {
+      selectParagraph();
 
-    } else if (this.isParapraphSelected(this.fromPos, this.toPos, this.paragraphRange)) {
-      this.expandToDocument();
+    } else if (entireParagraphSelected()) {
+      selectDocument();
+    }
+    
+
+    function nothingSelected() {
+      return $.isNothingSelected(editor);
+    }
+    
+    function partialLineSelected() {
+      // The entire line selected does not qualify as partial
+      return $.isSelectionWithinRange(editor, state.lineRange) && !$.isRangeSelected(editor, state.lineRange);
+    }
+
+    function entireLineSelected() {
+      // If line is also a paragraph, let paragraph handle it
+      return $.isRangeSelected(editor, state.lineRange) && !$.isRangeSelected(editor, state.paragraphRange);
+    }
+
+    function partialParapraphSelected() {
+      // The entire paragraph selected does not qualify as partial
+      return $.isSelectionWithinRange(editor, state.paragraphRange) && !$.isRangeSelected(editor, state.paragraphRange);
+    }
+    
+    function entireParagraphSelected() {
+      return $.isRangeSelected(editor, state.paragraphRange);
+    }
+
+    function selectLine() {
+      console.log(">> L");
+      $.setSelection(editor, state.lineRange);
+    }
+
+    function selectParagraph() {
+      console.log(">> P");
+      $.setSelection(editor, state.paragraphRange);
+    }
+
+    function selectDocument() {
+      console.log(">> D");
+      $.setSelection(editor, state.documentRange);
+    }
+
+    function log() {
+      console.log("selected (n,l,p) = (%s,%s,%s)", nothingSelected(), entireLineSelected(), entireParagraphSelected());
+      console.log(state);
     }
   }
+
+
 
   private shrinkSelectionCycle() {
-    if (!this.initSelectionState())
-      return;
-    if (!this.anchorPos)
-      return;
-
-    // const from = editor.getCursor('from');
-    // const to = editor.getCursor('to');
-    // const lineRange = this.getLineRange(this.anchorPos);
-    // const paragraphRange = this.getParagraphRange(this.anchorPos);
-    // const docRange = this.getDocRange();
-
-    if (this.isDocumentSelected(this.fromPos, this.toPos, this.docRange)) {
-      this.shrinkToParagraph(this.paragraphRange);
-      
-    } else if (this.isParapraphSelected(this.fromPos, this.toPos, this.paragraphRange) && !this.isLineSelected(this.fromPos, this.toPos, this.lineRange)) {
-      this.shrinkToLine(this.lineRange);
-      
-    } else if (this.isLineSelected(this.fromPos, this.toPos, this.lineRange)) {
-        this.shrinkToCaret(this.anchorPos);
-        this.anchorPos = null;
-    }
-  }
- 
-  private initSelectionState(): boolean {
-    this.editor = this.getActiveEditor();    
-    if(!this.editor) 
-      return false;
-
-    this.selection = this.editor.getSelection();
-    this.fromPos = this.editor.getCursor('from');
-    this.toPos = this.editor.getCursor('to');
+    const $ = this; // scope variable for nested functions
+    const editor = this.getActiveEditor();
+    if (!editor) return;
     
-    console.log("sel", JSON.stringify(this.selection));
-    console.log("from", JSON.stringify(this.fromPos));
-    console.log("to", JSON.stringify(this.toPos));
+    const state = this.getState(editor);
 
-    // States: caret, line, paragraph, document
 
-    if (this.isCaret()) {
-      this.anchorPos = this.fromPos;
+    if (nothingSelected()) {
+      return;
+    } else if (lineSelected()) {
+      restoreAnchor();
+    } else if (paragraphSelected()) {
+      selectLine();
+    } else if (documentSelected()) {
+      selectParagraph();
     }
-    this.lineRange = this.getLineRange(this.anchorPos);
-    this.paragraphRange = this.getParagraphRange(this.anchorPos);
-    this.docRange = this.getDocRange();
 
-    console.log("anchorPos", JSON.stringify(this.anchorPos));
-    console.log("isCaret: ", JSON.stringify(this.isCaret()));
-    console.log("lineRange: ", JSON.stringify(this.lineRange));
-    console.log("paragraphRange: ", JSON.stringify(this.paragraphRange));
-    console.log("docRange: ", JSON.stringify(this.docRange));
 
-    return true;
+    function nothingSelected() {
+      return $.isNothingSelected(editor);
+    }
+
+    function lineSelected() {
+      return $.isRangeSelected(editor, state.lineRange);
+    }
+
+    function paragraphSelected() {
+      return $.isRangeSelected(editor, state.paragraphRange);
+    }
+
+    function documentSelected() {
+      return $.isRangeSelected(editor, state.documentRange);
+    }
+
+    function restoreAnchor() {
+      console.log("<< A");
+      $.setCursor(editor, $.anchor);
+      $.anchor = null;
+    }
+
+    function selectLine() {
+      console.log("<< L");
+      $.setSelection(editor, state.lineRange);
+    }
+
+    function selectParagraph() {
+      console.log("<< P");
+      $.setSelection(editor, state.paragraphRange);
+    }
   }
+
   
-  private expandToDocument() {
-    console.log(">> Current selection: paragraph >> Expand selection to document");
-    this.setSelection(this.docRange.start, this.docRange.end);
-  }
 
-  private expandToParagraph() {
-    console.log(">> Current selection: line >> Expand selection to paragraph");
-    this.setSelection(this.paragraphRange.start, this.paragraphRange.end);
-  }
 
-  private expandToLine() {
-    console.log(">> Current selection: none >> Expand selection to line");
-    this.editor.setSelection(this.lineRange.start, this.lineRange.end);
-  }
 
-  private isCaret() {
-    return this.selection.length === 0;
-  }
 
-  
+
   private getActiveEditor(): Editor | null {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!view) return null;
     return (view as MarkdownView).editor;
   }
-
-  private setSelection(start: EditorPosition, end: EditorPosition) {
-    this.editor.setSelection(start, end);
-    console.log("---");
-  }
-
-  private posIsEqual(a: EditorPosition, b: EditorPosition) {
-    return a.line === b.line && a.ch === b.ch;
-  }
-
-  private isLineSelected(from: EditorPosition, to: EditorPosition, lineRange: EditorPositionRange) {
-    return this.rangeEquals(from, to, lineRange.start, lineRange.end);
-  }
   
-  private isParapraphSelected(from: EditorPosition, to: EditorPosition, paragraphRange: EditorPositionRange) {
-    return this.rangeEquals(from, to, paragraphRange.start, paragraphRange.end);
-  }
-
-  private isDocumentSelected(from: EditorPosition, to: EditorPosition, docRange: EditorPositionRange) {
-    return this.rangeEquals(from, to, docRange.start, docRange.end);
-  }
-  
-  private rangeEquals(aFrom: EditorPosition, aTo: EditorPosition, bFrom: EditorPosition, bTo: EditorPosition) {
-    return this.posIsEqual(aFrom, bFrom) && this.posIsEqual(aTo, bTo);
-  }
-
-  private shrinkToParagraph(paragraphRange: EditorPositionRange) {
-    this.editor.setSelection(paragraphRange.start, paragraphRange.end);
-  }
-  
-  private shrinkToLine(lineRange: EditorPositionRange) {
-    this.editor.setSelection(lineRange.start, lineRange.end);
-  }
-
-  private shrinkToCaret(pos: EditorPosition) {
-    this.editor.setCursor(pos);
-  }
-
-  private getLineRange(pos: EditorPosition) : EditorPositionRange {
-    const lineText = this.editor.getLine(pos.line);
+  private getState(editor: Editor): SelectionState {
+    const anchor = this.getAndOptionallySetGlobalAnchor(editor);
     return {
-      start: { line: pos.line, ch: 0 },
-      end: { line: pos.line, ch: lineText.length }
-    };
+      selection: editor.getSelection(),
+      from: editor.posToOffset(editor.getCursor("from")),
+      to: editor.posToOffset(editor.getCursor("to")),
+      anchor: anchor,
+      lineRange: this.getLineRange(editor, anchor),
+      paragraphRange: this.getParagraphRange(editor, anchor),
+      documentRange: this.getDocRange(editor),
+    }
   }
 
-  private getParagraphRange(pos: EditorPosition) : EditorPositionRange {
-    const maxLine = this.editor.lineCount() - 1;
+  private getAndOptionallySetGlobalAnchor(editor: Editor): number {
+    if (!this.anchor || this.isNothingSelected(editor)) {
+      this.anchor = editor.posToOffset(editor.getCursor());
+    }
+    return this.anchor;
+  }
+
+  private isNothingSelected(editor: Editor): boolean {
+    return editor.getSelection().length === 0;
+  } 
+
+  private isSelectionWithinRange(editor: Editor, range: SelectionRange): boolean {
+    if (this.isNothingSelected(editor))
+      return false; // Satisfy that range is greater than 0
+    const from = editor.posToOffset(editor.getCursor("from"));
+    const to = editor.posToOffset(editor.getCursor("to"));
+    return (from >= range.start) && (to <= range.end);
+  }
+  
+  private isRangeSelected(editor: Editor, range: SelectionRange): boolean {
+    if (this.isNothingSelected(editor))
+      return false; // Satisfy that range is greater than 0
+    const from = editor.posToOffset(editor.getCursor("from"));
+    const to = editor.posToOffset(editor.getCursor("to"));
+    return (from === range.start) && (to === range.end);
+  }
+  
+  private setSelection(editor: Editor, range: SelectionRange) {
+    editor.setSelection(editor.offsetToPos(range.start), editor.offsetToPos(range.end));
+  }
+
+  private setCursor(editor: Editor, pos: number) {
+    editor.setCursor(editor.offsetToPos(pos));
+  }
+
+
+
+
+
+  private getLineRange(editor: Editor, offset: number) : SelectionRange {
+    const pos = editor.offsetToPos(offset);
+    const text = editor.getLine(pos.line);
+    const start = editor.posToOffset({ line: pos.line, ch: 0 });
+    const end = editor.posToOffset({ line: pos.line, ch: text.length });
+    return { start, end };
+  }
+
+  private getParagraphRange(editor: Editor, offset: number) : SelectionRange {
+    const pos = editor.offsetToPos(offset);
+    const maxLine = editor.lineCount() - 1;
     // find start
     let startLine = pos.line;
     while (startLine > 0) {
-      const text = this.editor.getLine(startLine - 1);
+      const text = editor.getLine(startLine - 1);
       if (text.trim() === '') break;
       startLine--;
     }
     // find end
     let endLine = pos.line;
     while (endLine < maxLine) {
-      const text = this.editor.getLine(endLine + 1);
+      const text = editor.getLine(endLine + 1);
       if (text.trim() === '') break;
       endLine++;
     }
-    const start = { line: startLine, ch: 0 };
-    const end = { line: endLine, ch: this.editor.getLine(endLine).length };
+    const start = editor.posToOffset({ line: startLine, ch: 0 });
+    const end = editor.posToOffset({ line: endLine, ch: editor.getLine(endLine).length });
     return { start, end };
   }
   
-  private getDocRange() : EditorPositionRange {
+  private getDocRange(editor: Editor) : SelectionRange {
+    const lastLine = editor.lineCount() - 1;
     return { 
-      start: { line: 0, ch: 0 }, 
-      end: { line: this.editor.lineCount() - 1, ch: this.editor.getLine(this.editor.lineCount() - 1).length } 
+      start: 0,
+      end: editor.posToOffset({ line: lastLine, ch: editor.getLine(lastLine).length })
     };
   }
+
 }
+
+
+
+
+
+
 
 /*
 Notes:
