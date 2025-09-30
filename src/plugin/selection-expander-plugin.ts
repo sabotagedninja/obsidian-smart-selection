@@ -1,16 +1,7 @@
 import { Editor, MarkdownView, Plugin } from 'obsidian';
-import SelectionExpanderPluginImpl from './selection-expander-plugin-impl';
-
-interface SelectionExpanderPluginSettings {
-  mySetting: string;
-}
-
-const DEFAULT_SETTINGS: SelectionExpanderPluginSettings = {
-  mySetting: 'default'
-}
+import SelectionExpanderPluginImpl from 'src/plugin/selection-expander-plugin-impl';
 
 export default class SelectionExpanderPlugin extends Plugin {
-  settings: SelectionExpanderPluginSettings;
 
   async onload() {
 
@@ -20,7 +11,7 @@ export default class SelectionExpanderPlugin extends Plugin {
       callback: () => this.expandSelectionCycle(),
       hotkeys: [
         {
-          modifiers: ["Mod"],
+          modifiers: ['Mod'],
           key: 'a'
         }
       ]
@@ -33,7 +24,7 @@ export default class SelectionExpanderPlugin extends Plugin {
       callback: () => this.shrinkSelectionCycle(),
       hotkeys: [
         {
-          modifiers: ["Mod", "Shift"],
+          modifiers: ['Mod', 'Shift'],
           key: 'a'
         }
       ]
@@ -46,7 +37,7 @@ export default class SelectionExpanderPlugin extends Plugin {
 
 
   
-  private impl = new SelectionExpanderImpl();
+  private impl = new SelectionExpanderPluginImpl();
 
   private getActiveEditor(): Editor | null {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -54,7 +45,7 @@ export default class SelectionExpanderPlugin extends Plugin {
     return (view as MarkdownView).editor;
   }
 
-  private expandSelectionCycle() {
+  private expandSelectionCycle(): void {
     const editor = this.getActiveEditor();
     if (!editor)
       return;
@@ -62,7 +53,7 @@ export default class SelectionExpanderPlugin extends Plugin {
     this.impl.expandSelectionCycle();
   }
 
-  private shrinkSelectionCycle() {
+  private shrinkSelectionCycle(): void {
     const editor = this.getActiveEditor();
     if (!editor)
       return;
@@ -70,15 +61,3 @@ export default class SelectionExpanderPlugin extends Plugin {
     this.impl.shrinkSelectionCycle();
   }
 }
-
-
-/*
-Notes:
-- This code targets the common Obsidian editor API provided by the MarkdownView.editor object.
-- The Editor methods used here follow CodeMirror-style APIs available in Obsidian plugin examples: getCursor, getSelection, setSelection, getLine, lineCount, setCursor.
-- If the editor in your Obsidian build exposes slightly different method signatures, adapt the calls accordingly.
-- To make a complete plugin package you must add:
-  - manifest.json (with id, name, version, main)
-  - package.json and a build step to compile TypeScript to JS
-
-*/

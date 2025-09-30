@@ -1,16 +1,16 @@
 
-How to construct the algorithm?
+NOTES
 
-input:
-    - current file -or- current content as string
-        - for each cursor position
-output:
-    - a selection data type with cursor position, start of selection, end of selection
+Expand / Shrink Selection → common terminology used in IntelliJ, VS Code.
 
 
 
+TODO
 
-
-tsconnfig
-    // "inlineSourceMap": true,
-    // "inlineSources": true,
+- rename the plugin folder > remove the "BETA" part
+- rename parts in manifest.json: 
+    {
+        "id": "obsidian-selection-expander",
+        "name": "Selection Expander"
+    }
+- maybe rename plugin to "Smart Selection"

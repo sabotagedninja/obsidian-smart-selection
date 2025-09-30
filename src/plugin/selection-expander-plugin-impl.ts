@@ -1,25 +1,25 @@
-import { Editor, EditorPosition } from "obsidian";
+import { Editor, EditorPosition } from 'obsidian';
 
-type Range = {
-    start: number
-    end: number
+class Range {
+    startOffset: number
+    endOffset: number
+    constructor(startOffset: number, endOffset: number) {
+        this.startOffset = startOffset;
+        this.endOffset = endOffset;
+    }
 };
 
 type State = {
     selection: string
-    from: number
-    to: number
-    anchor: number
+    fromOffset: number
+    toOffset: number
+    cursorOffset: number
     lineRange: Range
     paragraphRange: Range
     documentRange: Range
 }
 
 export default class SelectionExpanderPluginImpl {
-
-    /* TODO
-        - Include Offset or Pos in variable names to make intent clear
-    */
 
     private editor: Editor;
     private cursor: number;
@@ -34,13 +34,7 @@ export default class SelectionExpanderPluginImpl {
 
     private checkEditor() {
         if (!this.editor)
-            throw new ReferenceError("editor not set");
-    }
-
-    getCursor(): EditorPosition {
-        this.checkEditor();
-        const offset = this.getAndOptionallySetGlobalAnchor()
-        return this.editor.offsetToPos(offset);
+            throw new ReferenceError('editor not set');
     }
 
     expandSelectionCycle() {
@@ -60,20 +54,19 @@ export default class SelectionExpanderPluginImpl {
             }
         } else { // Something is selected
             if (selectionIsOnSingleLine()) {
-                const sel = {start: state.from, end: state.to};
-                const range = $.getParagraphRange(state.from);
+                const sel = new Range(state.fromOffset, state.toOffset);
+                const range = $.getParagraphRange(state.fromOffset);
                 if (lineIsPartiallySelected(sel, range)) {
                     selectLine();
                 } else {
                     selectParagraph();
                 }
             } else { // Selection spans multiple lines
-                const sel = {start: state.from, end: state.to};
-                const range1 = $.getParagraphRange(state.from);
-                const range2 = $.getParagraphRange(state.to);
+                const sel = new Range(state.fromOffset, state.toOffset);
+                const range1 = $.getParagraphRange(state.fromOffset);
+                const range2 = $.getParagraphRange(state.toOffset);
                 if (eitherParagraphsArePartiallySelected(sel, range1, range2)) {
-                    const newRange: Range = {start: range1.start, end: range2.end};
-                    $.setSelection(newRange);
+                    $.setSelection(new Range(range1.startOffset, range2.endOffset));
                 } else {
                     selectDocument();
                 }
@@ -84,44 +77,44 @@ export default class SelectionExpanderPluginImpl {
 
 
         function nothingIsSelected() {
-            console.log("TRACE: nothingSelected() ?");
+            console.log('TRACE: nothingSelected() ?');
             return $.isNothingSelected();
         }
 
         function selectionIsOnSingleLine() {
-            console.log("TRACE: selectionIsOnSingleLine() ?");
-            const from = this.editor.offsetToPos(state.from);
-            const to = this.editor.offsetToPos(state.to);
+            console.log('TRACE: selectionIsOnSingleLine() ?');
+            const from = this.editor.offsetToPos(state.fromOffset);
+            const to = this.editor.offsetToPos(state.toOffset);
             return from.line === to.line;
         }
 
         function lineIsPartiallySelected(sel: Range, range: Range) {
-            console.log("TRACE: lineIsPartiallySelected() ?");
-            return sel.start > range.start || sel.end < range.end;
+            console.log('TRACE: lineIsPartiallySelected() ?');
+            return sel.startOffset > range.startOffset || sel.endOffset < range.endOffset;
         }
 
         function eitherParagraphsArePartiallySelected(sel: Range, range1: Range, range2: Range) {
-            console.log("TRACE: eitherParagraphsArePartiallySelected() ?");
-            return sel.start > range1.start || sel.end < range2.end;
+            console.log('TRACE: eitherParagraphsArePartiallySelected() ?');
+            return sel.startOffset > range1.startOffset || sel.endOffset < range2.endOffset;
         }
 
         function selectLine() {
-            console.log("TRACE: selectLine()");
+            console.log('TRACE: selectLine()');
             $.setSelection(state.lineRange);
         }
 
         function selectParagraph() {
-            console.log("TRACE: selectParagraph()");
+            console.log('TRACE: selectParagraph()');
             $.setSelection(state.paragraphRange);
         }
 
         function selectDocument() {
-            console.log("TRACE: selectDocument()");
+            console.log('TRACE: selectDocument()');
             $.setSelection(state.documentRange);
         }
 
         function log() {
-            console.log($.getCursor())
+            console.log($.cursor)
             console.log(state);
         }
     }
@@ -160,18 +153,18 @@ export default class SelectionExpanderPluginImpl {
         }
 
         function restoreAnchor() {
-            console.log("<< A");
+            console.log('<< A');
             $.setCursor($.cursor);
             $.cursor = null;
         }
 
         function selectLine() {
-            console.log("<< L");
+            console.log('<< L');
             $.setSelection(state.lineRange);
         }
 
         function selectParagraph() {
-            console.log("<< P");
+            console.log('<< P');
             $.setSelection(state.paragraphRange);
         }
     }
@@ -180,9 +173,9 @@ export default class SelectionExpanderPluginImpl {
         const anchor = this.getAndOptionallySetGlobalAnchor();
         return {
             selection: this.editor.getSelection(),
-            from: this.editor.posToOffset(this.editor.getCursor("from")),
-            to: this.editor.posToOffset(this.editor.getCursor("to")),
-            anchor: anchor,
+            fromOffset: this.editor.posToOffset(this.editor.getCursor('from')),
+            toOffset: this.editor.posToOffset(this.editor.getCursor('to')),
+            cursorOffset: anchor,
             lineRange: this.getLineRange(anchor),
             paragraphRange: this.getParagraphRange(anchor),
             documentRange: this.getDocRange(),
@@ -190,12 +183,12 @@ export default class SelectionExpanderPluginImpl {
     }
     
     private getAndOptionallySetGlobalAnchor(): number {
-        const from = this.editor.posToOffset(this.editor.getCursor("from"));
-        const to = this.editor.posToOffset(this.editor.getCursor("to"));
+        const from = this.editor.posToOffset(this.editor.getCursor('from'));
+        const to = this.editor.posToOffset(this.editor.getCursor('to'));
         const selectionContainsAnchor = (this.cursor >= from && this.cursor <= to);
-        console.log("selectionContainsAnchor: ", selectionContainsAnchor);
+        console.log('selectionContainsAnchor: ', selectionContainsAnchor);
         if (!this.cursor || this.isNothingSelected() || !selectionContainsAnchor) {
-            console.log("(re)setting anchor to: ", from);
+            console.log('(re)setting anchor to: ', from);
             this.cursor = from;
         }
         return this.cursor;
@@ -208,21 +201,21 @@ export default class SelectionExpanderPluginImpl {
     private isSelectionWithinRange(range: Range): boolean {
         if (this.isNothingSelected())
             return false; // Satisfy that range is greater than 0
-        const from = this.editor.posToOffset(this.editor.getCursor("from"));
-        const to = this.editor.posToOffset(this.editor.getCursor("to"));
-        return (from >= range.start) && (to <= range.end);
+        const from = this.editor.posToOffset(this.editor.getCursor('from'));
+        const to = this.editor.posToOffset(this.editor.getCursor('to'));
+        return (from >= range.startOffset) && (to <= range.endOffset);
     }
 
     private isFullRangeSelected(range: Range): boolean {
         if (this.isNothingSelected())
             return false; // Satisfy that range is greater than 0
-        const from = this.editor.posToOffset(this.editor.getCursor("from"));
-        const to = this.editor.posToOffset(this.editor.getCursor("to"));
-        return (from === range.start) && (to === range.end);
+        const from = this.editor.posToOffset(this.editor.getCursor('from'));
+        const to = this.editor.posToOffset(this.editor.getCursor('to'));
+        return (from === range.startOffset) && (to === range.endOffset);
     }
 
     private setSelection(range: Range) {
-        this.editor.setSelection(this.editor.offsetToPos(range.start), this.editor.offsetToPos(range.end));
+        this.editor.setSelection(this.editor.offsetToPos(range.startOffset), this.editor.offsetToPos(range.endOffset));
     }
 
     private setCursor(pos: number) {
@@ -234,7 +227,7 @@ export default class SelectionExpanderPluginImpl {
         const text = this.editor.getLine(pos.line);
         const start = this.editor.posToOffset({ line: pos.line, ch: 0 });
         const end = this.editor.posToOffset({ line: pos.line, ch: text.length });
-        return { start, end };
+        return { startOffset: start, endOffset: end };
     }
 
     private getParagraphRange(offset: number): Range {
@@ -256,14 +249,14 @@ export default class SelectionExpanderPluginImpl {
         }
         const start = this.editor.posToOffset({ line: startLine, ch: 0 });
         const end = this.editor.posToOffset({ line: endLine, ch: this.editor.getLine(endLine).length });
-        return { start, end };
+        return { startOffset: start, endOffset: end };
     }
 
     private getDocRange(): Range {
         const lastLine = this.editor.lineCount() - 1;
         return {
-            start: 0,
-            end: this.editor.posToOffset({ line: lastLine, ch: this.editor.getLine(lastLine).length })
+            startOffset: 0,
+            endOffset: this.editor.posToOffset({ line: lastLine, ch: this.editor.getLine(lastLine).length })
         };
     }
 }
