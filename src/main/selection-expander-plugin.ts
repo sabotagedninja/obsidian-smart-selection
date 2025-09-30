@@ -1,9 +1,5 @@
-// Obsidian Selection Expander
-// Single-file draft plugin.
-// Install: put compiled JS and manifest into a plugin folder per Obsidian docs.
-
-import { App, Editor, MarkdownView, EditorPosition, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import SelectionExpanderLogic from './selection-expander-logic';
+import { Editor, MarkdownView, Plugin } from 'obsidian';
+import SelectionExpanderPluginImpl from './selection-expander-plugin-impl';
 
 interface SelectionExpanderPluginSettings {
   mySetting: string;
@@ -12,21 +8,6 @@ interface SelectionExpanderPluginSettings {
 const DEFAULT_SETTINGS: SelectionExpanderPluginSettings = {
   mySetting: 'default'
 }
-
-type SelectionState = {
-      selection: string,
-      from: number,
-      to: number,
-      anchor: number,
-      lineRange: SelectionRange,
-      paragraphRange: SelectionRange,
-      documentRange: SelectionRange,
-}
-
-type SelectionRange = {
-  start: number;
-  end: number;
-};
 
 export default class SelectionExpanderPlugin extends Plugin {
   settings: SelectionExpanderPluginSettings;
@@ -63,28 +44,30 @@ export default class SelectionExpanderPlugin extends Plugin {
     // nothing special
   }
 
+
   
-  
-  private impl = new SelectionExpanderLogic();
+  private impl = new SelectionExpanderImpl();
+
+  private getActiveEditor(): Editor | null {
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (!view) return null;
+    return (view as MarkdownView).editor;
+  }
 
   private expandSelectionCycle() {
     const editor = this.getActiveEditor();
     if (!editor)
       return;
-    this.impl.expandSelectionCycle(editor);
+    this.impl.setEditor(editor);
+    this.impl.expandSelectionCycle();
   }
 
   private shrinkSelectionCycle() {
     const editor = this.getActiveEditor();
     if (!editor)
       return;
-    this.impl.shrinkSelectionCycle(editor);
-  }
-
-  private getActiveEditor(): Editor | null {
-    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!view) return null;
-    return (view as MarkdownView).editor;
+    this.impl.setEditor(editor);
+    this.impl.shrinkSelectionCycle();
   }
 }
 
