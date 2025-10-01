@@ -6,9 +6,9 @@ export default class SelectionExpanderPlugin extends Plugin {
   async onload() {
 
     this.addCommand({
-      id: 'expand-selection-cyclic',
+      id: 'smart-select-expand',
       name: 'Expand selection: caret → line → paragraph → document',
-      callback: () => this.expandSelectionCycle(),
+      callback: () => this.expandSelection(),
       hotkeys: [
         {
           modifiers: ['Mod'],
@@ -17,11 +17,10 @@ export default class SelectionExpanderPlugin extends Plugin {
       ]
     });
 
-    // Optional: also register a reverse shrink command
     this.addCommand({
-      id: 'shrink-selection-cyclic',
+      id: 'smart-select-shrink',
       name: 'Shrink selection (reverse cycle)',
-      callback: () => this.shrinkSelectionCycle(),
+      callback: () => this.shrinkSelection(),
       hotkeys: [
         {
           modifiers: ['Mod', 'Shift'],
@@ -31,12 +30,6 @@ export default class SelectionExpanderPlugin extends Plugin {
     });
   }
 
-  onunload() {
-    // nothing special
-  }
-
-
-  
   private impl = new SelectionExpanderPluginImpl();
 
   private getActiveEditor(): Editor | null {
@@ -45,19 +38,17 @@ export default class SelectionExpanderPlugin extends Plugin {
     return (view as MarkdownView).editor;
   }
 
-  private expandSelectionCycle(): void {
+  private expandSelection(): void {
     const editor = this.getActiveEditor();
-    if (!editor)
-      return;
+    if (!editor) return;
     this.impl.setEditor(editor);
-    this.impl.expandSelectionCycle();
+    this.impl.expandSelection();
   }
 
-  private shrinkSelectionCycle(): void {
+  private shrinkSelection(): void {
     const editor = this.getActiveEditor();
-    if (!editor)
-      return;
+    if (!editor) return;
     this.impl.setEditor(editor);
-    this.impl.shrinkSelectionCycle();
+    this.impl.shrinkSelection();
   }
 }

@@ -1,5 +1,5 @@
+import type { Editor } from 'obsidian';
 import SelectionExpanderPluginImpl from 'src/plugin/selection-expander-plugin-impl';
-import { Editor } from 'src/__mocks__/obsidian';
 
 type CaretIndexes = {
     anchor: number;
@@ -33,9 +33,11 @@ export function removeCarets(str: string): string {
     return str.replace(/[\|\^]/g, '',)
 }
 
-export function expand(plugin: SelectionExpanderPluginImpl, editor: Editor, textWithCarets: string, numberOfTimesToExpand: number = 1) {
-    var text = removeCarets(textWithCarets);
+export function expandSelection(plugin: SelectionExpanderPluginImpl, textWithCarets: string, numberOfTimesToExpand: number = 1) {
     var carets = findCaretIndexes(textWithCarets);
+    var text = removeCarets(textWithCarets);
+    
+    const editor = plugin.getEditor();
     editor.setValue(text);
 
     if (!carets.head) {
@@ -46,8 +48,7 @@ export function expand(plugin: SelectionExpanderPluginImpl, editor: Editor, text
     }
 
     while(numberOfTimesToExpand--) {
-        plugin.expandSelectionCycle();
-        plugin.setEditor(editor); // Bypass normal invalidation flow...
+        plugin.expandSelection();
     }
 
     return editor.getSelection();

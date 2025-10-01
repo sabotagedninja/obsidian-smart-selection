@@ -1,105 +1,111 @@
-import type { Editor, EditorPosition, EditorSelection, EditorSelectionOrCaret, EditorRange, EditorTransaction, EditorChange, EditorCommandName } from './obsidian';
+import type { Editor, EditorPosition, EditorSelection, EditorSelectionOrCaret, EditorRange, EditorTransaction, EditorChange, EditorCommandName } from 'obsidian';
 
-
+/**
+ * Implementation of the Obsidian Editor type. Can be used by an extended class to selectively reimplement specific methods.
+ * All methods throw Error('Method not implemented'). 
+ */
 abstract class AbstractEditor implements Editor {
     getDoc(): this {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     refresh(): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     getValue(): string {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     setValue(content: string): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     getLine(line: number): string {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     setLine(n: number, text: string): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     lineCount(): number {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     lastLine(): number {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     getSelection(): string {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     somethingSelected(): boolean {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     getRange(from: EditorPosition, to: EditorPosition): string {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     replaceSelection(replacement: string, origin?: string): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     replaceRange(replacement: string, from: EditorPosition, to?: EditorPosition, origin?: string): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     getCursor(string?: 'from' | 'to' | 'head' | 'anchor'): EditorPosition {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     listSelections(): EditorSelection[] {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     setCursor(pos: EditorPosition | number, ch?: number): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     setSelection(anchor: EditorPosition, head?: EditorPosition): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     setSelections(ranges: EditorSelectionOrCaret[], main?: number): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     focus(): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     blur(): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     hasFocus(): boolean {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     getScrollInfo(): { top: number; left: number; } {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     scrollTo(x?: number | null, y?: number | null): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     scrollIntoView(range: EditorRange, center?: boolean): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     undo(): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     redo(): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     exec(command: EditorCommandName): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     transaction(tx: EditorTransaction, origin?: string): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     wordAt(pos: EditorPosition): EditorRange | null {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     posToOffset(pos: EditorPosition): number {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     offsetToPos(offset: number): EditorPosition {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }
     processLines<T>(read: (line: number, lineText: string) => T | null, write: (line: number, lineText: string, value: T | null) => EditorChange | void, ignoreEmpty?: boolean): void {
-        throw new Error('Method not implemented.');
+        throw new Error('Method not implemented');
     }   
 }
 
+/**
+ * Barebones/partial implementation of the Obsidian Editor type, build for testing the Smart Selection plugin.
+ */
 export default class SimpleMockEditor extends AbstractEditor {
 
     private lines: string[];
@@ -110,11 +116,9 @@ export default class SimpleMockEditor extends AbstractEditor {
         anchor: EditorPosition;
     };
 
-    constructor(content: string) {
+    constructor() {
         super();
-        this.setValue(content);
     }
-
     getValue(): string {
         return this.lines.join('\n');
     }
@@ -143,18 +147,6 @@ export default class SimpleMockEditor extends AbstractEditor {
         return this.getValue().slice(start, end);
     }
     setSelection(anchor: EditorPosition, head?: EditorPosition): void {
-        // var from = anchor;
-        // var to = anchor;
-        // if (head /* is not null*/) {
-        //     if (this.posToOffset(anchor) < this.posToOffset(head)) {
-        //         from = anchor
-        //         to = head
-        //     } else /* gte */ {
-        //         from = head
-        //         to = anchor
-        //     }
-        // }
-        // this.pos = { from: from, to: to, anchor: anchor, head: head };
         const startOffset = this.posToOffset(anchor);
         const endOffset = this.posToOffset(head ?? anchor);
         const from = startOffset <= endOffset ? anchor : head ?? anchor;
@@ -165,13 +157,14 @@ export default class SimpleMockEditor extends AbstractEditor {
             anchor,
             head: head ?? anchor,
         };
+        // console.log(JSON.stringify(this.pos));
     }
     getRange(from: EditorPosition, to: EditorPosition): string {
         const start = this.posToOffset(from);
         const end = this.posToOffset(to);
         return this.getValue().slice(start, end);
     }
-    getCursor(which: 'from' | 'to' | 'head' | 'anchor' = 'head'): EditorPosition {
+    getCursor(which: 'from' | 'to' | 'head' | 'anchor' = 'anchor'): EditorPosition {
         return this.pos[which];
     }
     setCursor(pos: EditorPosition | number, ch?: number): void {
