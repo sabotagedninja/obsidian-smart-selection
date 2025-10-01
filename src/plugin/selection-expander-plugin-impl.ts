@@ -24,8 +24,12 @@ export default class SelectionExpanderPluginImpl {
     private editor: Editor;
     private cursor: number;
 
-    setEditor(editor: Editor) {
+    setEditor(editor: Editor): void {
         this.editor = editor;
+    }
+    
+    getEditor(): Editor {
+        return this.editor;
     }
 
     private invalidateEditor() {
@@ -37,7 +41,7 @@ export default class SelectionExpanderPluginImpl {
             throw new ReferenceError('editor not set');
     }
 
-    expandSelectionCycle() {
+    expandSelectionCycle(): void {
         this.checkEditor();
         const $ = this; // scope variable for nested functions
         const state = this.getState();
@@ -55,7 +59,7 @@ export default class SelectionExpanderPluginImpl {
         } else { // Something is selected
             if (selectionIsOnSingleLine()) {
                 const sel = new Range(state.fromOffset, state.toOffset);
-                const range = $.getParagraphRange(state.fromOffset);
+                const range = $.getLineRange(state.fromOffset);
                 if (lineIsPartiallySelected(sel, range)) {
                     selectLine();
                 } else {
@@ -83,8 +87,8 @@ export default class SelectionExpanderPluginImpl {
 
         function selectionIsOnSingleLine() {
             console.log('TRACE: selectionIsOnSingleLine() ?');
-            const from = this.editor.offsetToPos(state.fromOffset);
-            const to = this.editor.offsetToPos(state.toOffset);
+            const from = $.editor.offsetToPos(state.fromOffset);
+            const to = $.editor.offsetToPos(state.toOffset);
             return from.line === to.line;
         }
 
@@ -114,12 +118,11 @@ export default class SelectionExpanderPluginImpl {
         }
 
         function log() {
-            console.log($.cursor)
             console.log(state);
         }
     }
 
-    shrinkSelectionCycle() {
+    shrinkSelectionCycle(): void {
         this.checkEditor();
         const $ = this; // scope variable for nested functions
         const state = this.getState();

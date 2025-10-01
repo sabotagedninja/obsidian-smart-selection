@@ -1,4 +1,4 @@
-import type { Editor, EditorChange, EditorCommandName, EditorPosition, EditorRange } from './obsidian';
+import type { Editor, EditorPosition, EditorSelection, EditorSelectionOrCaret, EditorRange, EditorTransaction, EditorChange, EditorCommandName } from './obsidian';
 
 
 abstract class AbstractEditor implements Editor {
@@ -112,13 +112,7 @@ export default class SimpleMockEditor extends AbstractEditor {
 
     constructor(content: string) {
         super();
-        this.lines = content.split('\n');
-        this.pos = { 
-            from: { line: 0, ch: 0 }, 
-            to: { line: 0, ch: 0 },
-            head: { line: 0, ch: 0 },
-            anchor: { line: 0, ch: 0 }
-        };
+        this.setValue(content);
     }
 
     getValue(): string {
