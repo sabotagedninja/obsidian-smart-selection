@@ -1,6 +1,16 @@
 import type { Editor } from 'obsidian';
 import SelectionExpanderPluginImpl from 'src/plugin/selection-expander-plugin-impl';
 
+
+/**
+ * Remove spaces and replace `.` with `\n` in `str`. 
+ * Enables you to use strings in tests that are more readable. 
+ * e.g. `abc . def .. ghi` → `abc\ndef\n\nghi`
+ */
+export function _(str: string): string {
+  return str.replace(/\s/g, '').replace(/\./g, '\n');
+}
+
 type CaretIndexes = {
     anchor: number;
     head?: number;
