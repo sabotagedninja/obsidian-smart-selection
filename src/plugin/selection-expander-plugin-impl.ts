@@ -17,15 +17,17 @@ export default class SelectionExpanderPluginImpl {
 
     expandSelection(): void {
         this.checkEditor();
-        const $ = this; // scope variable for nested functions
+        const $ = this; // Scope variable for nested functions
         const editor = this.editor;
         const cursor = this.initCursor();
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
-        const selectionRange = toRange(from, to);
-        const lineRange = this.getLineRange(cursor);
-        const paragraphRange = this.getParagraphRange(cursor);
-        const documentRange = this.getDocumentRange();
+        const selection = toRange(from, to);
+        const line = this.getLineRange(cursor);
+        const paragraph = this.getParagraphRange(cursor);
+        const paragraphFrom = this.getParagraphRange(from);
+        const paragraphTo = this.getParagraphRange(to);
+        const document = this.getDocumentRange();
 
         if (nothingIsSelected()) {
             selectLine();
@@ -37,19 +39,20 @@ export default class SelectionExpanderPluginImpl {
             }
         } else { // Something is selected
             if (selectionIsOnSingleLine()) {
-                if (lineIsPartiallySelected(selectionRange, lineRange)) {
-                // if (eitherParagraphsArePartiallySelected(selectionRange, lineRange, lineRange)) {
+                if (lineIsPartiallySelected()) {
                     selectLine();
-                } else {
-                    selectParagraph();
+                } else { // Line is fully selected. Could as well be a paragraph. Check for that
+                    if (paragraphIsFullySelected()) {
+                        selectDocument();
+                    } else {
+                        selectParagraph();
+                    }
                 }
             } else { // Selection spans multiple lines
                 // Selection could be contained inside one paragraph, or it could span multiple paragraphs (calculation is the same)
                 // If one paragraph is partially selected, then range2 is the same as range1
-                const range1 = this.getParagraphRange(from);
-                const range2 = this.getParagraphRange(to);
-                if (eitherParagraphsArePartiallySelected(selectionRange, range1, range2)) {
-                    $.setSelection(toSelection(range1.from, range2.to));
+                if (eitherParagraphsArePartiallySelected()) {
+                    $.setSelection(toRange(paragraphFrom.from, paragraphTo.to)); // Custom range
                 } else {
                     selectDocument();
                 }
@@ -57,52 +60,79 @@ export default class SelectionExpanderPluginImpl {
         }
 
         // TODO Move these methods down to class level
+        // TODO change log(TRACE) to debug()
+        // TODO log a stacktrace in the last function invoked, setSelection(), to see the path travelled
 
         function nothingIsSelected() {
-            console.log('TRACE: nothingSelected() ?');
-            return $.isNothingSelected();
+            const result = $.isNothingSelected();
+            console.log('TRACE: nothingSelected() ?: ', result);
+            return result;
         }
 
         function selectionIsOnSingleLine() {
-            console.log('TRACE: selectionIsOnSingleLine() ?');
-            return from.line === to.line;
+            const result = from.line === to.line;
+            console.log('TRACE: selectionIsOnSingleLine() ?: ', result);
+            return result;
         }
 
-        function lineIsPartiallySelected(selection: EditorRange, line: EditorRange) {
-            console.log('TRACE: lineIsPartiallySelected() ?');
+        /*
+            FIXME Below two methods look different but are essentially the same:
+        
+            lineIsPartiallySelected <=> eitherParagraphsArePartiallySelected
+            ****IsPartiallySelected <=> either**********ArePartiallySelected
+
+            lineIsPartiallySelected                   tests if a range is not fully selected, and...
+            eitherParagraphsArePartiallySelected also tests if a range is not fully selected
+
+            To test this, pass the same lineRange object to eitherParagraphsArePartiallySelected and the result is the same!
+            However, eitherParagraphsArePartiallySelected performs less calculations than lineIsPartiallySelected.
+            
+            So... can i combine these into one?
+        */
+
+        function lineIsPartiallySelected() {
             // Check if selection is contained within the bounds of the line (but not equal to)
-            return rangeContains(selection, line) && !rangeEquals(selection, line);
+            const result = rangeContains(selection, line) && !rangeEquals(selection, line);
+            console.log('TRACE: lineIsPartiallySelected() ?: ', result);
+            return result;
         }
 
-        function eitherParagraphsArePartiallySelected(selection: EditorRange, par1: EditorRange, par2: EditorRange) {
-            console.log('TRACE: eitherParagraphsArePartiallySelected() ?');
+        function eitherParagraphsArePartiallySelected() {
             // Both paragraphs are fully selected if:
             //   - the start of the selection is equal to the start of paragraph 1.
             //   - the end of the selection is equal to the end of paragraph 2.
             //   - i.e. selection is equal to the union of both paragraphs
             // Either paragraphs are only partially selected when this is not the case (only one needs to be true).
-            return !posEquals(selection.from, par1.from) || !posEquals(selection.to, par2.to);
+            const result = !posEquals(selection.from, paragraphFrom.from) || !posEquals(selection.to, paragraphTo.to);
+            console.log('TRACE: eitherParagraphsArePartiallySelected() ?: ', result);
+            return result;
+        }
+
+        function paragraphIsFullySelected() {
+            const result = rangeEquals(selection, paragraph);
+            console.log('TRACE: paragraphIsFullySelected() ?: ', result);
+            return result;
         }
 
         function selectLine() {
             console.log('TRACE: selectLine()');
-            $.setSelection(toSelection(lineRange.from, lineRange.to));
+            $.setSelection(line);
         }
 
         function selectParagraph() {
             console.log('TRACE: selectParagraph()');
-            $.setSelection(toSelection(paragraphRange.from, paragraphRange.to));
+            $.setSelection(paragraph);
         }
 
         function selectDocument() {
             console.log('TRACE: selectDocument()');
-            $.setSelection(toSelection(documentRange.from, documentRange.to));
+            $.setSelection(document);
         }
     }
 
     shrinkSelection(): void {
         this.checkEditor();
-        const $ = this; // scope variable for nested functions
+        const $ = this; // Scope variable for nested functions
         const editor = this.editor;
         const cursor = this.initCursor();
         const from = this.editor.getCursor('from');
@@ -146,12 +176,12 @@ export default class SelectionExpanderPluginImpl {
 
         function selectLine() {
             console.log('TRACE: selectLine()');
-            $.setSelection(toSelection(lineRange.from, lineRange.to));
+            $.setSelection(lineRange);
         }
 
         function selectParagraph() {
             console.log('TRACE: selectParagraph()');
-            $.setSelection(toSelection(paragraphRange.from, paragraphRange.to));
+            $.setSelection(paragraphRange);
         }
     }
 
@@ -181,8 +211,8 @@ export default class SelectionExpanderPluginImpl {
         return !this.editor.somethingSelected();
     }
 
-    private setSelection(selection: EditorSelection) {
-        this.editor.setSelection(selection.anchor, selection.head);
+    private setSelection(range: EditorRange) {
+        this.editor.setSelection(range.from, range.to);
     }
 
     private setCursor(pos: EditorPosition): void {
