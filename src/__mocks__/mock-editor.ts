@@ -106,7 +106,7 @@ abstract class AbstractEditor implements Editor {
 /**
  * Barebones/partial implementation of the Obsidian Editor type, build for testing the Smart Selection plugin.
  */
-export default class SimpleMockEditor extends AbstractEditor {
+export default class SimpleMockEditor extends AbstractEditor { // TODO Rename to EditorStub (it's not a mock)
 
     private lines: string[];
     private pos: {

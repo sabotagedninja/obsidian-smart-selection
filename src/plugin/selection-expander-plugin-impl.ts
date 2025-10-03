@@ -14,12 +14,19 @@ export default class SelectionExpanderPluginImpl {
         if (!this.editor)
             throw new ReferenceError('editor not set');
     }
+    
+    // Important to note: The origin cursor will only stay in effect when it is inside the selection range. 
+    // If not, the origin cursor is reset to the selection anchor. This happens in initOriginCursor() prior to any expand/shrink operation.
+    // 
+    // All operations are performed around the origin. 
+    // So, you should read selectLine() as "select the line where the origin lies".
+    // Same for paragraph and document (but there is only just he one document :)
 
     expandSelection(): void {
         this.checkEditor();
+        this.initOriginCursor();
         const $ = this; // Scope variable for nested functions
-        const editor = this.editor;
-        const origin = this.initOriginCursor();
+        const origin = this.origin;
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
         const selection = toRange(from, to);
@@ -37,26 +44,26 @@ export default class SelectionExpanderPluginImpl {
                     selectDocument();
                 }
             }
-        } else { // Something is selected
-            if (selectionIsOnSingleLine()) {
-                if (lineIsPartiallySelected()) {
-                    selectLine();
-                } else { // Line is fully selected. Could as well be a paragraph. Check for that
-                    if (paragraphIsFullySelected()) {
-                        selectDocument();
-                    } else {
-                        selectParagraph();
-                    }
-                }
-            } else { // Selection spans multiple lines
-                // Selection could be contained inside one paragraph, or it could span multiple paragraphs (calculation is the same)
-                // If one paragraph is partially selected, then range2 is the same as range1
-                if (eitherParagraphsArePartiallySelected()) {
-                    $.setSelection(toRange(paragraphFrom.from, paragraphTo.to)); // Custom range
-                } else {
-                    selectDocument();
-                }
+
+        // Something is selected
+        } else if (selectionIsOnSingleLine()) {
+            if (lineIsPartiallySelected()) {
+                selectLine();
+            // Line fully selected. Could be a paragraph as well. Check for that.
+            } else if (paragraphIsFullySelected()) {
+                selectDocument();
+            } else {
+                selectParagraph();
             }
+
+        // Selection spans multiple lines
+        // Selection could be inside a paragraph, or span multiple paragraphs (calculation is the same)
+        // Uses paragraphFrom and paragraphTo
+        } else if (eitherParagraphsArePartiallySelected()) {
+            $.setSelection(toRange(paragraphFrom.from, paragraphTo.to)); // Custom range
+        
+        } else {
+            selectDocument();
         }
 
         // TODO Move these methods down to class level
@@ -86,8 +93,13 @@ export default class SelectionExpanderPluginImpl {
 
             To test this, pass the same lineRange object to eitherParagraphsArePartiallySelected and the result is the same!
             However, eitherParagraphsArePartiallySelected performs less calculations than lineIsPartiallySelected.
+
+            But... eitherParagraphsArePartiallySelected only works within the context of paragraph ranges matching the selection range!
+            i.e. eitherParagraphsArePartiallySelected returns TRUE for ANY selection in the document, except for when the the start and end points match !!
+            lineIsPartiallySelected is the safer option to choose.
             
-            So... can i combine these into one?
+            So... can i combine these into one? 
+            Probably best to use the safer logic of lineIsPartiallySelected and extend it with union(p1,p2)
         */
 
         function lineIsPartiallySelected() {
@@ -132,73 +144,84 @@ export default class SelectionExpanderPluginImpl {
 
     shrinkSelection(): void {
         this.checkEditor();
+        this.initOriginCursor();
         const $ = this; // Scope variable for nested functions
-        const editor = this.editor;
-        const origin = this.initOriginCursor();
+        const origin = this.origin;
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
-        const selectionRange = toRange(from, to);
-        const lineRange = this.getLineRange(origin);
-        const paragraphRange = this.getParagraphRange(origin);
-        const documentRange = this.getDocumentRange();
+        const selection = toRange(from, to);
+        const line = this.getLineRange(origin);
+        const paragraph = this.getParagraphRange(origin);
+        const document = this.getDocumentRange();
 
-        if (nothingSelected()) {
+        if (nothingIsSelected()) {
             return;
-        } else if (lineSelected()) {
-            restoreCursor();
-        } else if (paragraphSelected()) {
+
+        // Something is selected
+        } else if (selectionIsOnSingleLine()) { 
+            restoreOriginCursor();
+        
+        } else if (paragraphIsFullyOrPartiallySelected()) {
             selectLine();
-        } else if (documentSelected()) {
+
+        // TODO selection across multiple paragraphs
+
+        } else if (documentIsFullyOrPartiallySelected()) {
             selectParagraph();
         }
 
-        function nothingSelected() {
-            return $.isNothingSelected();
+        function nothingIsSelected() {
+            const result = $.isNothingSelected();
+            console.log('TRACE: nothingSelected() ?: ', result);
+            return result;
         }
 
-        function lineSelected() {
-            return rangeEquals(selectionRange, lineRange);
+        function selectionIsOnSingleLine() {
+            const result = from.line === to.line;
+            console.log('TRACE: selectionIsOnSingleLine() ?: ', result);
+            return result;
         }
 
-        function paragraphSelected() {
-            return rangeEquals(selectionRange, paragraphRange);
+        function paragraphIsFullyOrPartiallySelected() {
+            const result = rangeContains(selection, paragraph);
+            console.log('TRACE: paragraphIsFullyOrPartiallySelected() ?: ', result);
+            return result;
         }
 
-        function documentSelected() {
-            return rangeEquals(selectionRange, documentRange);
+        function documentIsFullyOrPartiallySelected() {
+            const result = rangeContains(selection, document);
+            console.log('TRACE: documentIsFullyOrPartiallySelected() ?: ', result);
+            return result;
         }
 
-        function restoreCursor() {
+        function restoreOriginCursor() {
             console.log('TRACE: restoreCursor()');
             $.setCursor(origin);
         }
 
         function selectLine() {
             console.log('TRACE: selectLine()');
-            $.setSelection(lineRange);
+            $.setSelection(line);
         }
 
         function selectParagraph() {
             console.log('TRACE: selectParagraph()');
-            $.setSelection(paragraphRange);
+            $.setSelection(paragraph);
         }
     }
 
-    private initOriginCursor(): EditorPosition {
+    private initOriginCursor(): void {
         const anchor = this.editor.getCursor('anchor');
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
-        // If origin cursor is not set or nothing is selected
-        if (!this.origin || this.isNothingSelected()) {
+        // If origin cursor is not set, nothing is selected, or origin cursor is outside of the selection
+        if (!this.origin || 
+            this.isNothingSelected() || 
+            !rangeContainsPos(this.origin, toRange(from, to))
+        ) {
             console.log('(re)setting origin cursor to: ', JSON.stringify(anchor));
-            return this.origin = anchor;
+            this.origin = anchor;
         }
-        // If origin cursor is outside of the selection
-        if (!rangeContainsPos(this.origin, toRange(from, to))) {
-            console.log('(re)setting origin cursor to: ', JSON.stringify(anchor));
-            return this.origin = anchor
-        }
-        return this.origin;
     }
 
     private isNothingSelected(): boolean {
