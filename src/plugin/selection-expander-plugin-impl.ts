@@ -2,7 +2,7 @@ import { Editor, EditorPosition, EditorRange, EditorSelection } from 'obsidian';
 
 export default class SelectionExpanderPluginImpl {
     private editor: Editor;
-    private cursor: EditorPosition;
+    private origin: EditorPosition;
 
     setEditor(editor: Editor): void {
         this.editor = editor;
@@ -19,12 +19,12 @@ export default class SelectionExpanderPluginImpl {
         this.checkEditor();
         const $ = this; // Scope variable for nested functions
         const editor = this.editor;
-        const cursor = this.initCursor();
+        const origin = this.initOriginCursor();
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
         const selection = toRange(from, to);
-        const line = this.getLineRange(cursor);
-        const paragraph = this.getParagraphRange(cursor);
+        const line = this.getLineRange(origin);
+        const paragraph = this.getParagraphRange(origin);
         const paragraphFrom = this.getParagraphRange(from);
         const paragraphTo = this.getParagraphRange(to);
         const document = this.getDocumentRange();
@@ -60,8 +60,8 @@ export default class SelectionExpanderPluginImpl {
         }
 
         // TODO Move these methods down to class level
-        // TODO change log(TRACE) to debug()
-        // TODO log a stacktrace in the last function invoked, setSelection(), to see the path travelled
+        // TODO register every important function call so that I can see the path travelled through the code - RedLine.register()
+        // TODO remove log(TRACE)
 
         function nothingIsSelected() {
             const result = $.isNothingSelected();
@@ -134,12 +134,12 @@ export default class SelectionExpanderPluginImpl {
         this.checkEditor();
         const $ = this; // Scope variable for nested functions
         const editor = this.editor;
-        const cursor = this.initCursor();
+        const origin = this.initOriginCursor();
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
         const selectionRange = toRange(from, to);
-        const lineRange = this.getLineRange(cursor);
-        const paragraphRange = this.getParagraphRange(cursor);
+        const lineRange = this.getLineRange(origin);
+        const paragraphRange = this.getParagraphRange(origin);
         const documentRange = this.getDocumentRange();
 
         if (nothingSelected()) {
@@ -170,8 +170,7 @@ export default class SelectionExpanderPluginImpl {
 
         function restoreCursor() {
             console.log('TRACE: restoreCursor()');
-            $.setCursor(cursor);
-            $.cursor = null;
+            $.setCursor(origin);
         }
 
         function selectLine() {
@@ -185,26 +184,21 @@ export default class SelectionExpanderPluginImpl {
         }
     }
 
-    private initCursor(): EditorPosition {
+    private initOriginCursor(): EditorPosition {
         const anchor = this.editor.getCursor('anchor');
-
-        // If cursor is not set or nothing is selected
-        if (!this.cursor || this.isNothingSelected()) {
-            console.log('(re)setting cursor to: ', JSON.stringify(anchor));
-            return this.cursor = anchor;
+        const from = this.editor.getCursor('from');
+        const to = this.editor.getCursor('to');
+        // If origin cursor is not set or nothing is selected
+        if (!this.origin || this.isNothingSelected()) {
+            console.log('(re)setting origin cursor to: ', JSON.stringify(anchor));
+            return this.origin = anchor;
         }
-
-        const anchorIndex = this.editor.posToOffset(anchor);
-        const cursorIndex = this.editor.posToOffset(this.cursor);
-        const cursorAndAnchorAreEqual = (anchorIndex === cursorIndex); // USING INDEXES HERE
-
-        // If the anchor of the selection is different than the stored cursor
-        if (!cursorAndAnchorAreEqual) {
-            console.log('(re)setting cursor to: ', JSON.stringify(anchor));
-            return this.cursor = anchor
+        // If origin cursor is outside of the selection
+        if (!rangeContainsPos(this.origin, toRange(from, to))) {
+            console.log('(re)setting origin cursor to: ', JSON.stringify(anchor));
+            return this.origin = anchor
         }
-
-        return this.cursor;
+        return this.origin;
     }
 
     private isNothingSelected(): boolean {
@@ -299,6 +293,32 @@ function rangeEquals(r1: EditorRange, r2: EditorRange): boolean {
 function rangeContains(r1: EditorRange, r2: EditorRange): boolean {
     return posGTE(r1.from, r2.from) && posLTE(r1.to, r2.to);
 }
+function rangeContainsPos(pos: EditorPosition, range: EditorRange): boolean {
+    return posGTE(pos, range.from) && posLTE(pos, range.to);
+}
 function rangeOverlaps(r1: EditorRange, r2: EditorRange): boolean {
     return posLTE(r1.from, r2.to) && posGTE(r1.to, r2.from);
+}
+function getStackTrace(): string {
+    if ("captureStackTrace" in Error) {
+        const obj = {};
+        // Avoid getStackTrace itself in the stack trace
+        Error.captureStackTrace(obj, getStackTrace);
+        const stacktrace = (obj as any).stack;
+        // Process stacktrace - remove anything outside of this plugin
+        const lines: string[] = [];
+        var quit = false;
+        stacktrace.split('\n').forEach((line: string) => {
+            if (quit) return;
+            line = line.trim();
+            if (line == 'Error:') return;
+            line = line.replace('SelectionExpanderPluginImpl.', '').replace(/^at\s/, '').replace(/\(.+?\)/, '');
+            lines.push("  " + line);
+            if (line.includes('expandSelection') || line.includes('shrinkSelection')) {
+                quit = true;
+            }
+        });
+        return "Stacktrace:\n" + lines.join('\n');
+    }
+    return null;
 }

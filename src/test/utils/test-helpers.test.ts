@@ -1,23 +1,45 @@
-import { findCaretIndexes, removeCarets } from "./test-helpers"
+import { _, findCursorIndexes, removeCursorSymbols } from "./test-helpers"
 
 describe('Test helper functions', () => {
-    describe('findCaretIndexes', () => {
-        test('Valid caret configurations', () => {
-            expect(findCaretIndexes('a|b')).toStrictEqual({anchor: 1});
-            expect(findCaretIndexes('|ab|')).toStrictEqual({anchor: 0, head: 2});
-            expect(findCaretIndexes('^ab|')).toStrictEqual({anchor: 0, head: 2});
-            expect(findCaretIndexes('|ab^')).toStrictEqual({anchor: 2, head: 0});
-        })
-        test('Invalid caret configurations', () => {
-            expect(() => findCaretIndexes('ab')).toThrow();
-            expect(() => findCaretIndexes('^ab')).toThrow();
-            expect(() => findCaretIndexes('^ab^')).toThrow();
-        })
-    })
-    test('removeCarets', () => {
-        expect(removeCarets('a|b')).toBe('ab');
-        expect(removeCarets('|ab|')).toBe('ab');
-        expect(removeCarets('^ab|')).toBe('ab');
-        expect(removeCarets('|ab^')).toBe('ab');
-    })
-})
+    describe('findCursorIndexes', () => {
+        describe('Valid cursor configurations', () => {
+            test('Caret (or blinking cursor) - no selection', () => {
+                expect(findCursorIndexes('a|bc')).toStrictEqual({ anchor: 1 });
+            });
+            test('Selection', () => {
+                expect(findCursorIndexes('a|bc|')).toStrictEqual({ anchor: 1, head: 3 });
+            });
+            test('Forward selection', () => {
+                expect(findCursorIndexes('a^bc|')).toStrictEqual({ anchor: 1, head: 3 });
+            });
+            test('Backward selection', () => {
+                expect(findCursorIndexes('a|bc^')).toStrictEqual({ anchor: 3, head: 1 });
+            });
+            test('Selection with origin', () => {
+                expect(findCursorIndexes('a|b^c|')).toStrictEqual({ anchor: 1, head: 3, origin: 2 });
+            });
+        });
+        describe('Invalid cursor configurations', () => {
+            test('No cursors', () => {
+                expect(() => findCursorIndexes('abc')).toThrow();
+            });
+            test('Origin cursor(s) without normal cursor(s)', () => {
+                expect(() => findCursorIndexes('^abc')).toThrow();
+            });
+            test('Origin outside of selection', () => {
+                expect(() => findCursorIndexes('|ab|c^')).toThrow();
+            });
+            test('Cursor count > 3', () => {
+                expect(() => findCursorIndexes('|a^b|c|')).toThrow();
+            });
+        });
+    });
+    test('removeCursorSymbols', () => {
+        expect(removeCursorSymbols('|a^bc|')).toBe('abc');
+    });
+    describe('Remove spaces and replace . with \n', () => {
+        test('_', () => {
+            expect(_('abc . def .. ghi')).toBe('abc\ndef\n\nghi');
+        });
+    });
+});

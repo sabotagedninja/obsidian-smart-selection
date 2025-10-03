@@ -1,4 +1,3 @@
-import type { Editor } from 'obsidian';
 import SelectionExpanderPluginImpl from 'src/plugin/selection-expander-plugin-impl';
 
 
@@ -11,55 +10,104 @@ export function _(str: string): string {
   return str.replace(/\s/g, '').replace(/\./g, '\n');
 }
 
-type CaretIndexes = {
+type CursorIndexes = {
     anchor: number;
     head?: number;
+    origin?: number;
 }
 
-// Valid caret configurations: '|abc', '|abc|', '^abc|', '|abc^'
-// Invalid caret configurations: 'abc', '^abc', '^abc^'
-export function findCaretIndexes(str: string): CaretIndexes {
-    if (str.includes('|')) {
-        const containsOnlyOnePipeCaret = str.indexOf('|') === str.lastIndexOf('|') && !str.includes('^');
-        const containsOnlyTwoPipeCarets = str.indexOf('|') < str.lastIndexOf('|') && !str.includes('^');
-        const containsAnchorBeforeHead = str.indexOf('^') < str.lastIndexOf('|');
-        const containsHeadBeforeAnchor = str.indexOf('|') < str.lastIndexOf('^');
-        // Caret symbols should not count themselves as character indexes!
-        // Therefor, subtract 1 from the second caret's index.
-        if (containsOnlyOnePipeCaret) {
-            return {anchor: str.indexOf('|')};
-        } else if (containsOnlyTwoPipeCarets) {
-            return {anchor: str.indexOf('|'), head: str.lastIndexOf('|') - 1};
-        } else if (containsAnchorBeforeHead) {
-            return {anchor: str.indexOf('^'), head: str.indexOf('|') - 1};
-        } else if (containsHeadBeforeAnchor) {
-            return {anchor: str.indexOf('^') - 1, head: str.indexOf('|')};
-        }
+// Valid cursor configurations:
+//   '|abc'     Caret (blinking cursor)
+//   '|abc|'    Selection
+//   '^abc|'    Forward selection
+//   '|abc^'    Backward selection
+//   '|ab^c|'   Selection with origin (used for shrinkSelection)
+// Invalid cursor configurations:
+//   'abc'      No cursors
+//   '^abc'     Origin cursor(s) without normal cursor(s)
+//   '|ab|c^'   Origin outside of selection
+//   '|a^b|c|'  Cursor count > 3
+export function findCursorIndexes(str: string): CursorIndexes {
+    const cursorCount = (str.match(/[|^]/g) || []).length;
+    if (!cursorCount) throw new Error("No cursors");
+    if (cursorCount > 3) throw new Error("Too many cursors");
+    if (!str.includes('|')) throw new Error("Must include at least one pipe symbol cursor");
+    const oneCursor = cursorCount == 1;
+    const twoCursors = cursorCount == 2;
+    const threeCursors = cursorCount == 3;
+    const containsCaretSymbol = str.includes('^');
+    const p1idx = str.indexOf('|');     // Index of first pipe symbol
+    const p2idx = str.lastIndexOf('|'); // Index of second pipe symbol
+    const cidx = str.indexOf('^');      // Index of caret symbol
+    const isCaret = oneCursor && p1idx >= 0;
+    const isSelection = twoCursors && p1idx < p2idx;
+    const isForwardSelection = twoCursors && containsCaretSymbol && cidx < p1idx;
+    const isBackwardSelection = twoCursors && containsCaretSymbol && p1idx < cidx;
+    const isSelectionWithOrigin = threeCursors && containsCaretSymbol && p1idx < cidx && cidx < p2idx;
+    // Cursor symbols should not count themselves as character indexes!
+    // Therefor, subtract 1 for each subsequent cursor found
+    if (isCaret) {
+        return { anchor: p1idx };
+    } else if (isSelection) {
+        return { anchor: p1idx, head: p2idx - 1 };
+    } else if (isForwardSelection) {
+        return { anchor: cidx, head: p1idx - 1 };
+    } else if (isBackwardSelection) {
+        return { anchor: cidx - 1, head: p1idx };
+    } else if (isSelectionWithOrigin) {
+        return { anchor: p1idx, head: p2idx - 2, origin: cidx - 1 };
     }
-    throw new Error('Invalid caret configuration');
+    throw new Error('Invalid cursor configuration: ' + str);
 }
 
-export function removeCarets(str: string): string {
-    return str.replace(/[\|\^]/g, '',)
+export function removeCursorSymbols(str: string): string {
+    return str.replace(/[|^]/g, '',)
 }
 
-export function expandSelection(plugin: SelectionExpanderPluginImpl, textWithCarets: string, numberOfTimesToExpand: number = 1) {
-    var carets = findCaretIndexes(textWithCarets);
-    var text = removeCarets(textWithCarets);
+export function expandSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToExpand: number = 1) {
+    // TODO add some explaining comments
+    var cursors = findCursorIndexes(textWithCursors);
+    var text = removeCursorSymbols(textWithCursors);
     
     const editor = plugin.getEditor();
     editor.setValue(text);
 
-    if (!carets.head) {
-        editor.setCursor(editor.offsetToPos(carets.anchor));
+    if (!cursors.head) {
+        editor.setCursor(editor.offsetToPos(cursors.anchor));
     } else {
-        console.log('test-helper: editor.setSelection(): ', JSON.stringify(carets));
-        editor.setSelection(editor.offsetToPos(carets.anchor), editor.offsetToPos(carets.head));
+        editor.setSelection(editor.offsetToPos(cursors.anchor), editor.offsetToPos(cursors.head));
     }
 
     while(numberOfTimesToExpand--) {
         plugin.expandSelection();
     }
+
+    return editor.getSelection();
+}
+
+export function shrinkSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToShrink: number = 1) {
+    // TODO add some explaining comments
+    var cursors = findCursorIndexes(textWithCursors);
+    var text = removeCursorSymbols(textWithCursors);
+
+    const editor = plugin.getEditor();
+    editor.setValue(text);
+
+    if (!cursors.head) {
+        editor.setCursor(editor.offsetToPos(cursors.anchor));
+    } else {
+        editor.setSelection(editor.offsetToPos(cursors.anchor), editor.offsetToPos(cursors.head));
+    }
+
+    if (cursors.origin) {
+        plugin['origin'] = editor.offsetToPos(cursors.origin);
+    }
+
+    while(numberOfTimesToShrink--) {
+        plugin.shrinkSelection();
+    }
+    
+    console.log(cursors);
 
     return editor.getSelection();
 }
