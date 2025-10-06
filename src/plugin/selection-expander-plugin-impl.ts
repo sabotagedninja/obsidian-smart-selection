@@ -129,8 +129,6 @@ export default class SelectionExpanderPluginImpl {
         const selection = toRange(from, to);
         const line = this.getLineRange(origin);
         const paragraph = this.getParagraphRange(origin);
-        const paragraphFrom = this.getParagraphRange(from);
-        const paragraphTo = this.getParagraphRange(to);
 
         if (nothingIsSelected()) {
             return;
@@ -141,11 +139,7 @@ export default class SelectionExpanderPluginImpl {
         } else if (paragraphIsFullyOrPartiallySelected()) { // At least two lines, full or partial, within origin paragraph
             selectLine();
 
-        // } else if (multipleParagraphsAreFullyOrPartiallySelected()) {
-        //     selectPartialParagraph();
-            
         } else {
-            // selectPartialParagraph(); // This also works
             selectParagraph();
         }
 
@@ -167,12 +161,6 @@ export default class SelectionExpanderPluginImpl {
             return result;
         }
 
-        // function multipleParagraphsAreFullyOrPartiallySelected() {
-        //     const result = rangeIntersects(paragraphFrom, selection) && rangeIntersects(paragraphTo, selection);
-        //     console.log('TRACE: multipleParagraphsAreFullyOrPartiallySelected() ?: ', result);
-        //     return result;
-        // }
-
         function restoreOriginCursor() {
             console.log('TRACE: restoreCursor()');
             $.setCursor(origin);
@@ -183,15 +171,9 @@ export default class SelectionExpanderPluginImpl {
             $.setSelection(getIntersection(line, selection));
         }
 
-        function selectPartialParagraph() {
-            console.log('TRACE: selectPartialParagraph()');
-            $.setSelection(getIntersection(paragraph, selection));
-        }
-
         function selectParagraph() {
-            // console.log('TRACE: selectParagraph()');
-            // $.setSelection(paragraph);
-            selectPartialParagraph();
+            console.log('TRACE: selectParagraph()');
+            $.setSelection(getIntersection(paragraph, selection));
         }
     }
 
