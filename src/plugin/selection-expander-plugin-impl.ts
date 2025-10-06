@@ -110,7 +110,7 @@ export default class SelectionExpanderPluginImpl {
         
         function selectOneOrMoreParagraphs() {
             console.log('TRACE: selectOneOrMoreParagraphs()');
-            $.setSelection(paragraphsFromTo); // Still works if both ranges are the same paragraph
+            $.setSelection(paragraphsFromTo);
         }
 
         function selectDocument() {

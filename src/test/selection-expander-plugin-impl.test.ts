@@ -1,7 +1,6 @@
 import EditorStub from './stubs/obsidian-editor-stub';
-import SelectionExpanderPluginImpl, { getIntersection, getUnion, posEquals, posGT, posGTE, posLT, posLTE, rangeContains, rangeContainsPos, rangeEquals, rangeIntersects, toPos, toRange, toSelection } from '../plugin/selection-expander-plugin-impl'
+import SelectionExpanderPluginImpl, { toPos, toRange, toSelection, posEquals, posGTE, posGT, posLTE, posLT, rangeEquals, rangeContains, rangeContainsPartial, rangeContainsPos, rangeIntersects, getIntersection, getUnion } from '../plugin/selection-expander-plugin-impl'
 import { _, expandSelection, shrinkSelection } from './utils/test-helpers';
-
 
 const TWO_TIMES = 2;
 const THREE_TIMES = 3;
@@ -17,54 +16,59 @@ describe('Plugin: SelectionExpanderPluginImpl', () => {
 
   });
 
-  describe('Scenario: Expand selection', () => { // TODO Write better srings in test() - add expected result
+  describe('Function under test: expandSelection', () => {
 
     describe('Scenario: Expand to line', () => {
+
       describe('Condition: No selection', () => {
-        test('Cursor somewhere on a line', () => {
+        test('Cursor somewhere on a line → selects that line', () => {
           expect(expandSelection(plugin, _('|abc . def'))).toBe(_('abc'));
           expect(expandSelection(plugin, _('ab|c . def'))).toBe(_('abc'));
           expect(expandSelection(plugin, _('abc . def|'))).toBe(_('def'));
         });
       });
       describe('Condition: Selection on single line', () => {
-        test('Selection range', () => {
+        test('Partial line selected → selects that line', () => {
           expect(expandSelection(plugin, _('|ab|c . def'))).toBe(_('abc'));
+          expect(expandSelection(plugin, _('abc . d|ef|'))).toBe(_('def'));
         });
-        test('Forward selection (anchor=^)', () => {
-          expect(expandSelection(plugin, _('a^bc| . def'))).toBe(_('abc'));
+        test('Forward selection (anchor=^) → selects that line', () => {
+          expect(expandSelection(plugin, _('^ab|c . def'))).toBe(_('abc'));
+          expect(expandSelection(plugin, _('abc . d^ef|'))).toBe(_('def'));
         });
-        test('Backward selection (anchor=^)', () => {
-          expect(expandSelection(plugin, _('abc . |de^f'))).toBe(_('def'));
+        test('Backward selection (anchor=^) → selects that line', () => {
+          expect(expandSelection(plugin, _('|ab^c . def'))).toBe(_('abc'));
+          expect(expandSelection(plugin, _('abc . d|ef^'))).toBe(_('def'));
         });
       });
     });
 
     describe('Scenario: Expand to paragraph', () => {
+
       describe('Condition: No selection', () => {
-        test('Cursor on empty line after paragraph → selects paragraph above cursor', () => {
+        test('Cursor on empty line after paragraph → selects empty line + paragraph above cursor', () => {
           expect(expandSelection(plugin, _('abc . def .| .. ghi'))).toBe(_('abc . def .'));
         });
-        test('Cursor on empty line before paragraph → selects paragraph below cursor', () => {
+        test('Cursor on empty line before paragraph → selects empty line + paragraph below cursor', () => {
           expect(expandSelection(plugin, _('|. abc . def .. ghi'))).toBe(_('. abc . def'));
         });
-        test('Cursor on empty line between paragraphs → selects both paragraphs', () => {
+        test('Cursor on empty line between paragraphs → selects paragraphs above and below cursor, including empty line', () => {
           expect(expandSelection(plugin, _('abc .|. def .. ghi'))).toBe(_('abc .. def'));
         });
-        test('Cursor on line in paragraph → selects line first, then paragraph (perform 2 expansions)', () => {
+        test('Cursor on line in paragraph → perform 2 expansions → selects line first, then paragraph', () => {
           expect(expandSelection(plugin, _('abc . def| .. ghi'), TWO_TIMES)).toBe(_('abc . def'));
         });
       });
       describe('Condition: Selection within single paragraph', () => {
-        test('Partially selected line → selects line first, then paragraph (perform 2 expansions)', () => {
+        test('Line partially selected → perform 2 expansions → selects line first, then paragraph', () => {
           expect(expandSelection(plugin, _('|ab|c . def .. ghi'), TWO_TIMES)).toBe(_('abc . def'));
         });
-        test('Partially selected paragraph (spans 2 lines) → selects paragraph', () => {
+        test('Paragraph partially selected (spans 2 lines) → selects paragraph', () => {
           expect(expandSelection(plugin, _('ab|c . de|f .. ghi'))).toBe(_('abc . def'));
         });
       });
       describe('Condition: Selection across multiple paragraphs', () => {
-        test('Partially selected paragraphs → selects those paragraphs', () => {
+        test('Paragraph partially selected → selects those paragraphs', () => {
           expect(expandSelection(plugin, _('ab|c .. de|f .. ghi'))).toBe(_('abc .. def'));
           expect(expandSelection(plugin, _('a|bc .. def .... g|hi .. jkl'))).toBe(_('abc .. def .... ghi'));
         });
@@ -72,6 +76,7 @@ describe('Plugin: SelectionExpanderPluginImpl', () => {
     });
 
     describe('Scenario: Expand to document', () => {
+
       test('Empty line surrounded by empty lines → selects entire document', () => {
         expect(expandSelection(plugin, _('abc ..|.. def'))).toBe(_('abc .... def'));
         expect(expandSelection(plugin, _('abc ...|.. defghi .. jkl'))).toBe(_('abc ... .. defghi .. jkl'));
@@ -101,30 +106,24 @@ describe('Plugin: SelectionExpanderPluginImpl', () => {
 
   });
 
-  describe('Scenario: Shrink selection', () => {
+  describe('Function under test: shrinkSelection', () => {
 
     describe('Scenario: Shrink to paragraph', () => {
       test('Document fully selected → selects paragraph with origin cursor', () => {
         expect(shrinkSelection(plugin, _('| abc . de^f .. ghi . jkl |'))).toBe(_('abc . def'));
       });
-      // Hmm... This never happens!
-      // The origin cursor can only be different than the anchor cursor when an expansion occurred directly before a shrink. 
-      // This also means that a paragraph is ALWAYS fully selected.
-      // 
-      // A shrink from a partial selection IS possible (user selection), but the ---
-      //
-      // NO WAIT !! THIS CAN HAPPEN:
-      //
-      // 1) User expands twice from the origin cursor → the paragraph is selected.
-      // 2) User selects text AROUND the origin cursor. The plugin is unaware of this and just waits for the next expand/shrink command.
-      //    - Note that the origin cursor is still valid at this point, from the perspective of the plugin.
-      // 3) Now, a shrink command is fired. What should the plugin do? Exactly that what these tests are describing...
+      // After an expand operation, a line/paragraph/document is always fully selected.
+      // However, a partial selection with the origin cursor somewhere inside is possible like this (e.g.):
+      //  1) User expands twice from the origin cursor → the paragraph is selected.
+      //  2) User selects text AROUND the origin cursor. The plugin is unaware of this and just waits for the next expand/shrink command.
+      //     Note that the origin cursor is completely valid since it's inside the selection.
+      //  3) Now, a shrink command is fired. The plugin behaves like so:
       //
       test('First paragraph fully and second paragraph partially selected → selects paragraph with origin cursor', () => {
-        expect(shrinkSelection(plugin, _('| abc . de^f .. ghi .| jkl'))).toBe(_('abc . def'));
+        expect(shrinkSelection(plugin, _('| abc . de^f .. ghi |. jkl'))).toBe(_('abc . def'));
       });
-      test('Both paragraphs partially selected → partially selects first paragraph with origin cursor', () => {
-        expect(shrinkSelection(plugin, _('ab|c . de^f .. ghi .| jkl'))).toBe(_('c . def'));
+      test('Both paragraphs partially selected → partially selects paragraph with origin cursor', () => {
+        expect(shrinkSelection(plugin, _('ab|c . de^f .. ghi |. jkl'))).toBe(_('c . def'));
       });
     });
 
@@ -161,7 +160,13 @@ describe('Plugin: SelectionExpanderPluginImpl', () => {
       });
     });
 
-    describe('Scenario: Consequtive expansions', () => {
+    describe('Scenario: Consequtive shrinkages', () => {
+      test('One shrinkage → selects paragraph with origin cursor', () => {
+        expect(shrinkSelection(plugin, _('| abc . de^f .. ghi . jkl |'))).toBe(_('abc . def'));
+      });
+      test('Two shrinkages → selects line with origin cursor', () => {
+        expect(shrinkSelection(plugin, _('| abc . de^f .. ghi . jkl |'), TWO_TIMES)).toBe(_('def'));
+      });
       test('Three shrinkages → restores origin cursor (nothing selected)', () => {
         expect(shrinkSelection(plugin, _('| abc . de^f .. ghi . jkl |'), THREE_TIMES)).toBe(_(''));
         expect(plugin.getEditor().getCursor()).toStrictEqual(toPos(1, 2));
@@ -173,7 +178,6 @@ describe('Plugin: SelectionExpanderPluginImpl', () => {
 });
 
 describe('Functions', () => {
-
   const POS_0 = toPos(0, 0);
   const POS_1 = toPos(1, 1);
   const POS_2 = toPos(2, 2);
@@ -221,16 +225,41 @@ describe('Functions', () => {
     expect(posLT(POS_1, POS_1)).toBeFalsy();
     expect(posLT(POS_2, POS_1)).toBeFalsy();
   });
-  test('rangeEquals', () => {
-    expect(rangeEquals(toRange(POS_1, POS_1), toRange(POS_1, POS_1))).toBeTruthy(); // Cursor
-    expect(rangeEquals(toRange(POS_1, POS_2), toRange(POS_1, POS_2))).toBeTruthy(); // Selection
-    expect(rangeEquals(toRange(POS_1, POS_2), toRange(POS_2, POS_1))).toBeFalsy();
+  describe('rangeEquals', () => {
+    test('cursor equals cursor (not really a range, but still works)', () => {
+      expect(rangeEquals(toRange(POS_1, POS_1), toRange(POS_1, POS_1))).toBeTruthy();
+    });
+    test('range equals range', () => {
+      expect(rangeEquals(toRange(POS_1, POS_2), toRange(POS_1, POS_2))).toBeTruthy();
+      expect(rangeEquals(toRange(POS_1, POS_2), toRange(POS_2, POS_1))).toBeFalsy();
+    });
   });
-  test('rangeContains', () => {
+  describe('rangeContains (range A contains range B - fully or partial)', () => {
     const range = toRange(POS_1, POS_4);
-    expect(rangeContains(range, range)).toBeTruthy(); // A equal to B
-    expect(rangeContains(range, toRange(POS_2, POS_3))).toBeTruthy(); // B inside of A
-    expect(rangeContains(range, toRange(POS_0, POS_4))).toBeFalsy(); // B inside and outside of A
+    test('A equal to B → true', () => {
+      expect(rangeContains(range, range)).toBeTruthy();
+    });
+    test('B inside of A → true', () => {
+      expect(rangeContains(range, toRange(POS_2, POS_3))).toBeTruthy();
+    });
+    test('B inside and outside of A → false', () => {
+      expect(rangeContains(range, toRange(POS_0, POS_4))).toBeFalsy();
+    });
+  });
+  describe('rangeContainsPartial (range A contains range B - exclusively partial, not fully)', () => {
+    const range = toRange(POS_1, POS_4);
+    test('A equal to B → false', () => {
+      expect(rangeContainsPartial(range, range)).toBeFalsy();
+    });
+    test('B (partially) inside of A (not fully) → true', () => {
+      expect(rangeContainsPartial(range, toRange(POS_1, POS_3))).toBeTruthy();
+      expect(rangeContainsPartial(range, toRange(POS_2, POS_3))).toBeTruthy();
+      expect(rangeContainsPartial(range, toRange(POS_2, POS_4))).toBeTruthy();
+      expect(rangeContainsPartial(range, toRange(POS_1, POS_4))).toBeFalsy(); // Fully, i.e. B equal to A
+    });
+    test('B (partially) inside and outside of A → false', () => {
+      expect(rangeContainsPartial(range, toRange(POS_0, POS_3))).toBeFalsy();
+    });
   });
   test('rangeContainsPos', () => {
     const range = toRange(POS_1, POS_3);
@@ -240,59 +269,107 @@ describe('Functions', () => {
     expect(rangeContainsPos(range, POS_0)).toBeFalsy();
     expect(rangeContainsPos(range, POS_4)).toBeFalsy();
   });
-  test('rangeIntersects', () => { // TODO split this into description with multiple tests
+  describe('rangeIntersects (range A intersects with range B)', () => {
     const cursor = toRange(POS_3, POS_3);
     const range = toRange(POS_2, POS_5);
-    expect(rangeIntersects(cursor, cursor)).toBeFalsy(); // Both cursors (not a range)
-    expect(rangeIntersects(range, cursor)).toBeTruthy(); // Range A contains cursor B
-    expect(rangeIntersects(range, range)).toBeTruthy(); // A equal to B | B fully inside of A
-    expect(rangeIntersects(range, toRange(POS_2, POS_4))).toBeTruthy(); // A equal to B (boundary test)
-    expect(rangeIntersects(range, toRange(POS_3, POS_5))).toBeTruthy(); // A equal to B (boundary test) (2)
-    expect(rangeIntersects(range, toRange(POS_3, POS_4))).toBeTruthy(); // B inside of A
-    expect(rangeIntersects(range, toRange(POS_1, POS_3))).toBeTruthy(); // B inside and outside of A
-    expect(rangeIntersects(range, toRange(POS_4, POS_6))).toBeTruthy(); // B inside and outside of A (2)
-    expect(rangeIntersects(range, toRange(POS_0, POS_1))).toBeFalsy(); // B fully outside of A
-    expect(rangeIntersects(range, toRange(POS_6, POS_7))).toBeFalsy(); // B fully outside of A (2)
-    expect(rangeIntersects(range, toRange(POS_1, POS_2))).toBeFalsy(); // B adjacent to A (boundary test)
-    expect(rangeIntersects(range, toRange(POS_5, POS_6))).toBeFalsy(); // B adjacent to A (boundary test) (2)
-    expect(rangeIntersects(toRange(POS_1, POS_3), toRange(POS_2, POS_4))).toBeTruthy(); // B overlaps A ...
-    expect(rangeIntersects(toRange(POS_2, POS_4), toRange(POS_1, POS_3))).toBeTruthy(); // ... and A overlaps B
+    test('Both cursors (not a range) → false', () => {
+      expect(rangeIntersects(cursor, cursor)).toBeFalsy();
+    });
+    test('Range A contains cursor B → true', () => {
+      expect(rangeIntersects(range, cursor)).toBeTruthy();
+    });
+    test('A equal to B (reflexive) → true', () => {
+      expect(rangeIntersects(range, range)).toBeTruthy();
+    });
+    test('B partially inside of A → true', () => {
+      expect(rangeIntersects(range, toRange(POS_2, POS_4))).toBeTruthy();
+      expect(rangeIntersects(range, toRange(POS_3, POS_4))).toBeTruthy();
+      expect(rangeIntersects(range, toRange(POS_3, POS_5))).toBeTruthy();
+    });
+    test('B inside and outside of A → true', () => {
+      expect(rangeIntersects(range, toRange(POS_1, POS_3))).toBeTruthy(); // B wraps around A.from
+      expect(rangeIntersects(range, toRange(POS_4, POS_6))).toBeTruthy(); // B wraps around A.to
+    });
+    test('B fully outside of A → false', () => {
+      expect(rangeIntersects(range, toRange(POS_0, POS_1))).toBeFalsy();
+      expect(rangeIntersects(range, toRange(POS_6, POS_7))).toBeFalsy();
+    });
+    test('B adjacent to A (boundary test) → false', () => {
+      expect(rangeIntersects(range, toRange(POS_1, POS_2))).toBeFalsy();
+      expect(rangeIntersects(range, toRange(POS_5, POS_6))).toBeFalsy();
+    });
+    test('B overlaps A and A overlaps B (symmetric) → true', () => {
+      expect(rangeIntersects(toRange(POS_1, POS_3), toRange(POS_2, POS_4))).toBeTruthy();
+      expect(rangeIntersects(toRange(POS_2, POS_4), toRange(POS_1, POS_3))).toBeTruthy();
+    });
   });
-  test('getIntersection', () => { // TODO split this into description with multiple tests
+  describe('getIntersection (intersection of range A with range B)', () => {
     const cursor = toRange(POS_3, POS_3);
     const range = toRange(POS_2, POS_5);
-    expect(getIntersection(cursor, cursor)).toBeNull(); // Cursor
-    expect(getIntersection(range, cursor)).toBeNull(); // Cursor (2)
-    expect(getIntersection(range, range)).toStrictEqual(range); // A equal to B | B fully inside of A
-    expect(getIntersection(range, toRange(POS_2, POS_4))).toStrictEqual(toRange(POS_2, POS_4)); // A equal to B (boundary test)
-    expect(getIntersection(range, toRange(POS_3, POS_5))).toStrictEqual(toRange(POS_3, POS_5)); // A equal to B (boundary test) (2)
-    expect(getIntersection(range, toRange(POS_3, POS_4))).toStrictEqual(toRange(POS_3, POS_4)); // B inside of A
-    expect(getIntersection(range, toRange(POS_1, POS_3))).toStrictEqual(toRange(POS_2, POS_3)); // B inside and outside of A
-    expect(getIntersection(range, toRange(POS_4, POS_6))).toStrictEqual(toRange(POS_4, POS_5)); // B inside and outside of A (2)
-    expect(getIntersection(range, toRange(POS_0, POS_1))).toBeNull(); // B fully outside of A
-    expect(getIntersection(range, toRange(POS_6, POS_7))).toBeNull(); // B fully outside of A (2)
-    expect(getIntersection(range, toRange(POS_1, POS_2))).toBeNull(); // B adjacent to A (boundary test)
-    expect(getIntersection(range, toRange(POS_5, POS_6))).toBeNull(); // B adjacent to A (boundary test) (2)
-    expect(getIntersection(toRange(POS_1, POS_3), toRange(POS_2, POS_4))).toStrictEqual(toRange(POS_2, POS_3)); // B overlaps A ...
-    expect(getIntersection(toRange(POS_2, POS_4), toRange(POS_1, POS_3))).toStrictEqual(toRange(POS_2, POS_3)); // ... and A overlaps B
+    test('Both cursors (not a range) → null', () => {
+      expect(getIntersection(cursor, cursor)).toBeNull();
+    });
+    test('Range A contains cursor B → null', () => {
+      expect(getIntersection(range, cursor)).toBeNull();
+    });
+    test('A equal to B (reflexive)', () => {
+      expect(getIntersection(range, range)).toStrictEqual(range);
+    });
+    test('B partially inside of A', () => {
+      expect(getIntersection(range, toRange(POS_2, POS_4))).toStrictEqual(toRange(POS_2, POS_4));
+      expect(getIntersection(range, toRange(POS_3, POS_4))).toStrictEqual(toRange(POS_3, POS_4));
+      expect(getIntersection(range, toRange(POS_3, POS_5))).toStrictEqual(toRange(POS_3, POS_5));
+    });
+    test('B inside and outside of A', () => {
+      expect(getIntersection(range, toRange(POS_1, POS_3))).toStrictEqual(toRange(POS_2, POS_3)); // B wraps around A.from
+      expect(getIntersection(range, toRange(POS_4, POS_6))).toStrictEqual(toRange(POS_4, POS_5)); // B wraps around A.to
+    });
+    test('B fully outside of A → null', () => {
+      expect(getIntersection(range, toRange(POS_0, POS_1))).toBeNull();
+      expect(getIntersection(range, toRange(POS_6, POS_7))).toBeNull();
+    });
+    test('B adjacent to A (boundary test) → null', () => {
+      expect(getIntersection(range, toRange(POS_1, POS_2))).toBeNull();
+      expect(getIntersection(range, toRange(POS_5, POS_6))).toBeNull();
+    });
+    test('B overlaps A and A overlaps B (symmetric)', () => {
+      expect(getIntersection(toRange(POS_1, POS_3), toRange(POS_2, POS_4))).toStrictEqual(toRange(POS_2, POS_3));
+      expect(getIntersection(toRange(POS_2, POS_4), toRange(POS_1, POS_3))).toStrictEqual(toRange(POS_2, POS_3));
+    });
   });
-  test('getUnion', () => { // TODO split this into description with multiple tests
+  describe('getUnion (union of range A with range B)', () => {
     const cursor = toRange(POS_3, POS_3);
     const range = toRange(POS_2, POS_5);
-    expect(getUnion(cursor, cursor)).toStrictEqual(cursor); // Cursor
-    expect(getUnion(range, cursor)).toStrictEqual(range); // Cursor (2)
-    expect(getUnion(range, range)).toStrictEqual(range); // A equal to B | B fully inside of A
-    expect(getUnion(range, toRange(POS_2, POS_4))).toStrictEqual(toRange(POS_2, POS_5)); // A equal to B (boundary test)
-    expect(getUnion(range, toRange(POS_3, POS_5))).toStrictEqual(toRange(POS_2, POS_5)); // A equal to B (boundary test) (2)
-    expect(getUnion(range, toRange(POS_3, POS_4))).toStrictEqual(toRange(POS_2, POS_5)); // B inside of A
-    expect(getUnion(range, toRange(POS_1, POS_3))).toStrictEqual(toRange(POS_1, POS_5)); // B inside and outside of A
-    expect(getUnion(range, toRange(POS_4, POS_6))).toStrictEqual(toRange(POS_2, POS_6)); // B inside and outside of A (2)
-    expect(getUnion(range, toRange(POS_0, POS_1))).toStrictEqual(toRange(POS_0, POS_5)); // B fully outside of A
-    expect(getUnion(range, toRange(POS_6, POS_7))).toStrictEqual(toRange(POS_2, POS_7)); // B fully outside of A (2)
-    expect(getUnion(range, toRange(POS_1, POS_2))).toStrictEqual(toRange(POS_1, POS_5)); // B adjacent to A (boundary test)
-    expect(getUnion(range, toRange(POS_5, POS_6))).toStrictEqual(toRange(POS_2, POS_6)); // B adjacent to A (boundary test) (2)
-    expect(getUnion(toRange(POS_1, POS_3), toRange(POS_2, POS_4))).toStrictEqual(toRange(POS_1, POS_4)); // B overlaps A ...
-    expect(getUnion(toRange(POS_2, POS_4), toRange(POS_1, POS_3))).toStrictEqual(toRange(POS_1, POS_4)); // ... and A overlaps B
+    test('Both cursors (not a range) → cursor', () => {
+      expect(getUnion(cursor, cursor)).toStrictEqual(cursor);
+    });
+    test('Range A contains cursor B → range A', () => {
+      expect(getUnion(range, cursor)).toStrictEqual(range);
+    });
+    test('A equal to B (reflexive) → range A', () => {
+      expect(getUnion(range, range)).toStrictEqual(range);
+    });
+    test('B partially inside of A', () => {
+      expect(getUnion(range, toRange(POS_2, POS_4))).toStrictEqual(toRange(POS_2, POS_5));
+      expect(getUnion(range, toRange(POS_3, POS_4))).toStrictEqual(toRange(POS_2, POS_5));
+      expect(getUnion(range, toRange(POS_3, POS_5))).toStrictEqual(toRange(POS_2, POS_5));
+    });
+    test('B inside and outside of A', () => {
+      expect(getUnion(range, toRange(POS_1, POS_3))).toStrictEqual(toRange(POS_1, POS_5)); // B wraps around A.from
+      expect(getUnion(range, toRange(POS_4, POS_6))).toStrictEqual(toRange(POS_2, POS_6)); // B wraps around A.to
+    });
+    test('B fully outside of A → null', () => {
+      expect(getUnion(range, toRange(POS_0, POS_1))).toStrictEqual(toRange(POS_0, POS_5));
+      expect(getUnion(range, toRange(POS_6, POS_7))).toStrictEqual(toRange(POS_2, POS_7));
+    });
+    test('B adjacent to A (boundary test) → null', () => {
+      expect(getUnion(range, toRange(POS_1, POS_2))).toStrictEqual(toRange(POS_1, POS_5));
+      expect(getUnion(range, toRange(POS_5, POS_6))).toStrictEqual(toRange(POS_2, POS_6));
+    });
+    test('B overlaps A and A overlaps B (symmetric)', () => {
+      expect(getUnion(toRange(POS_1, POS_3), toRange(POS_2, POS_4))).toStrictEqual(toRange(POS_1, POS_4));
+      expect(getUnion(toRange(POS_2, POS_4), toRange(POS_1, POS_3))).toStrictEqual(toRange(POS_1, POS_4));
+    });
   });
 
 });
