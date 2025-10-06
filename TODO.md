@@ -17,3 +17,7 @@ TODO
         "id": "obsidian-smart-select",
         "name": "Smart Select"
     }
+    
+// TODO register every important function call so that I can see the path travelled through the code - RedLine.register()
+// TODO remove log(TRACE)
+// TODO add some explaining comments to test-helpers.expandOrShrinkSelection()

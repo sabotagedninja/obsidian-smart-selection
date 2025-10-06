@@ -1,9 +1,9 @@
 {
-	"id": "selection-expander-BETA",
-	"name": "Selection Expander BETA",
-	"version": "0.1.0",
+	"id": "obsidian-smart-selection",
+	"name": "Smart Selection",
+	"version": "1.0.0",
 	"minAppVersion": "0.12.0",
-	"description": "Cycle selection from caret to line, paragraph and document with repeated Ctrl+A.",
+	"description": "Cycle selection from caret to line, paragraph and document with repeated `Ctrl + A`. Reverse with `Ctrl + Shift + A`",
 	"author": "sabotagedninja",
 	"authorUrl": "https://github.com/sabotagedninja/obsidian-extend-selection-wip"
 }

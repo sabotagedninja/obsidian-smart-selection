@@ -1,4 +1,4 @@
-import SelectionExpanderPluginImpl from 'src/plugin/selection-expander-plugin-impl';
+import SmartSelectionPluginImpl from 'src/plugin/smart-selection-plugin-impl';
 
 
 /**
@@ -71,17 +71,17 @@ export function removeCursorSymbols(str: string): string {
     return str.replace(/[|^]/g, '',)
 }
 
-export function expandSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToExpand: number = 1): string {
+export function expandSelection(plugin: SmartSelectionPluginImpl, textWithCursors: string, numberOfTimesToExpand: number = 1): string {
     const expandFn = () => { plugin.expandSelection(); };
     return expandOrShrinkSelection(plugin, textWithCursors, numberOfTimesToExpand, expandFn);
 }
 
-export function shrinkSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToShrink: number = 1): string {
+export function shrinkSelection(plugin: SmartSelectionPluginImpl, textWithCursors: string, numberOfTimesToShrink: number = 1): string {
     const shrinkFn = () => { plugin.shrinkSelection(); };
     return expandOrShrinkSelection(plugin, textWithCursors, numberOfTimesToShrink, shrinkFn);
 }
 
-function expandOrShrinkSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimes: number = 1, expandOrShrinkFunction: Function): string {
+function expandOrShrinkSelection(plugin: SmartSelectionPluginImpl, textWithCursors: string, numberOfTimes: number = 1, expandOrShrinkFunction: Function): string {
     // TODO add some explaining comments
     const cursors = findCursorIndexes(textWithCursors);
     const text = removeCursorSymbols(textWithCursors);

@@ -1,5 +1,5 @@
 import EditorStub from './stubs/obsidian-editor-stub';
-import SelectionExpanderPluginImpl, { toPos, toRange, toSelection, posEquals, posGTE, posGT, posLTE, posLT, rangeEquals, rangeContains, rangeContainsPartial, rangeContainsPos, rangeIntersects, getIntersection, getUnion } from '../plugin/selection-expander-plugin-impl'
+import SmartSelectionPluginImpl, { toPos, toRange, toSelection, posEquals, posGTE, posGT, posLTE, posLT, rangeEquals, rangeContains, rangeContainsPartial, rangeContainsPos, rangeIntersects, getIntersection, getUnion } from '../plugin/smart-selection-plugin-impl'
 import { _, expandSelection, shrinkSelection } from './utils/test-helpers';
 
 const TWO_TIMES = 2;
@@ -7,11 +7,11 @@ const THREE_TIMES = 3;
 
 describe('Plugin: SelectionExpanderPluginImpl', () => {
 
-  let plugin: SelectionExpanderPluginImpl;
+  let plugin: SmartSelectionPluginImpl;
 
   beforeEach(() => {
     const editor = new EditorStub(); // Obsidian Editor stub
-    plugin = new SelectionExpanderPluginImpl();
+    plugin = new SmartSelectionPluginImpl();
     plugin.setEditor(editor);
 
   });

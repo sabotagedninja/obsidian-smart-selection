@@ -1,6 +1,6 @@
 import { Editor, EditorPosition, EditorRange, EditorSelection } from 'obsidian';
 
-export default class SelectionExpanderPluginImpl {
+export default class SmartSelectionPluginImpl {
     private editor: Editor;
     private origin: EditorPosition;
 
