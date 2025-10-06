@@ -34,6 +34,7 @@ export default class SelectionExpanderPluginImpl {
         const paragraph = this.getParagraphRange(origin);
         const paragraphFrom = this.getParagraphRange(from);
         const paragraphTo = this.getParagraphRange(to);
+        const paragraphsFromTo = getUnion(paragraphFrom, paragraphTo);
         const document = this.getDocumentRange();
 
         if (nothingIsSelected()) {
@@ -56,7 +57,7 @@ export default class SelectionExpanderPluginImpl {
             }
 
             // Selection spans multiple lines
-        } else if (oneOrMoreParagraphsArePartiallySelected()) {
+        } else if (oneOrMoreParagraphsArePartiallySelected()) { // Not fully!
             selectOneOrMoreParagraphs();
 
             // One or more paragraphs are fully selected
@@ -86,14 +87,13 @@ export default class SelectionExpanderPluginImpl {
         }
 
         function lineIsFullySelectedAndIsAlsoAParagraph() {
-            const result = rangeEquals(selection, paragraph);
+            const result = rangeEquals(paragraph, selection);
             console.log('TRACE: lineIsFullySelectedAndIsAlsoAParagraph() ?: ', result);
             return result;
         }
 
         function oneOrMoreParagraphsArePartiallySelected() {
-            const union = getUnion(paragraphFrom, paragraphTo);
-            const result = rangeContainsPartial(union, selection);
+            const result = rangeContainsPartial(paragraphsFromTo, selection);
             console.log('TRACE: oneOrMoreParagraphsArePartiallySelected() ?: ', result);
             return result;
         }
@@ -110,7 +110,7 @@ export default class SelectionExpanderPluginImpl {
         
         function selectOneOrMoreParagraphs() {
             console.log('TRACE: selectOneOrMoreParagraphs()');
-            $.setSelection(getUnion(paragraphFrom, paragraphTo)); // Still works if both ranges are the same paragraph
+            $.setSelection(paragraphsFromTo); // Still works if both ranges are the same paragraph
         }
 
         function selectDocument() {
@@ -137,10 +137,10 @@ export default class SelectionExpanderPluginImpl {
             restoreOriginCursor();
 
         } else if (paragraphIsFullyOrPartiallySelected()) { // At least two lines, full or partial, within origin paragraph
-            selectLine();
+            selectLine(); // Could be partial
 
         } else {
-            selectParagraph();
+            selectParagraph(); // Could be partial
         }
 
         function nothingIsSelected() {
@@ -168,12 +168,12 @@ export default class SelectionExpanderPluginImpl {
 
         function selectLine() {
             console.log('TRACE: selectLine()');
-            $.setSelection(getIntersection(line, selection));
+            $.setSelection(getIntersection(line, selection)); // If line was partially selected, select only that part
         }
 
         function selectParagraph() {
             console.log('TRACE: selectParagraph()');
-            $.setSelection(getIntersection(paragraph, selection));
+            $.setSelection(getIntersection(paragraph, selection)); // If paragraph was partially selected, select only that part
         }
     }
 
