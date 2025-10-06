@@ -103,10 +103,12 @@ abstract class AbstractEditor implements Editor {
     }   
 }
 
+// TODO write unit test for EditorStub
+
 /**
  * Barebones/partial implementation of the Obsidian Editor type, build for testing the Smart Selection plugin.
  */
-export default class SimpleMockEditor extends AbstractEditor { // TODO Rename to EditorStub (it's not a mock)
+export default class EditorStub extends AbstractEditor {
 
     private lines: string[];
     private pos: {
@@ -142,8 +144,8 @@ export default class SimpleMockEditor extends AbstractEditor { // TODO Rename to
         );
     }
     getSelection(): string {
-        var start = this.posToOffset(this.pos.from);
-        var end = this.posToOffset(this.pos.to);
+        const start = this.posToOffset(this.pos.from);
+        const end = this.posToOffset(this.pos.to);
         return this.getValue().slice(start, end);
     }
     setSelection(anchor: EditorPosition, head?: EditorPosition): void {
@@ -157,7 +159,6 @@ export default class SimpleMockEditor extends AbstractEditor { // TODO Rename to
             anchor,
             head: head ?? anchor,
         };
-        // console.log(JSON.stringify(this.pos));
     }
     getRange(from: EditorPosition, to: EditorPosition): string {
         const start = this.posToOffset(from);

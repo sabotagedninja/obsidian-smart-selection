@@ -14,7 +14,7 @@ export default class SelectionExpanderPluginImpl {
         if (!this.editor)
             throw new ReferenceError('editor not set');
     }
-    
+
     // Important to note: The origin cursor will only stay in effect when it is inside the selection range. 
     // If not, the origin cursor is reset to the selection anchor. This happens in initOriginCursor() prior to any expand/shrink operation.
     // 
@@ -45,34 +45,31 @@ export default class SelectionExpanderPluginImpl {
                 }
             }
 
-        // Something is selected
+            // Something is selected
         } else if (selectionIsOnSingleLine()) {
             if (lineIsPartiallySelected()) {
                 selectLine();
-            // Line fully selected. Could be a paragraph as well. Check for that.
-            } else if (paragraphIsFullySelected()) {
+            } else if (lineIsFullySelectedAndIsAlsoAParagraph()) {
                 selectDocument();
             } else {
                 selectParagraph();
             }
 
-        // Selection spans multiple lines
-        // Selection could be inside a paragraph, or span multiple paragraphs (calculation is the same)
-        // Uses paragraphFrom and paragraphTo
-        } else if (eitherParagraphsArePartiallySelected()) {
-            $.setSelection(toRange(paragraphFrom.from, paragraphTo.to)); // Custom range
-        
+            // Selection spans multiple lines
+        } else if (oneOrMoreParagraphsArePartiallySelected()) {
+            selectOneOrMoreParagraphs();
+
+            // One or more paragraphs are fully selected
         } else {
             selectDocument();
         }
 
-        // TODO Move these methods down to class level
         // TODO register every important function call so that I can see the path travelled through the code - RedLine.register()
         // TODO remove log(TRACE)
 
         function nothingIsSelected() {
             const result = $.isNothingSelected();
-            console.log('TRACE: nothingSelected() ?: ', result);
+            console.log('TRACE: nothingIsSelected() ?: ', result);
             return result;
         }
 
@@ -82,47 +79,22 @@ export default class SelectionExpanderPluginImpl {
             return result;
         }
 
-        /*
-            FIXME Below two methods look different but are essentially the same:
-        
-            lineIsPartiallySelected <=> eitherParagraphsArePartiallySelected
-            ****IsPartiallySelected <=> either**********ArePartiallySelected
-
-            lineIsPartiallySelected                   tests if a range is not fully selected, and...
-            eitherParagraphsArePartiallySelected also tests if a range is not fully selected
-
-            To test this, pass the same lineRange object to eitherParagraphsArePartiallySelected and the result is the same!
-            However, eitherParagraphsArePartiallySelected performs less calculations than lineIsPartiallySelected.
-
-            But... eitherParagraphsArePartiallySelected only works within the context of paragraph ranges matching the selection range!
-            i.e. eitherParagraphsArePartiallySelected returns TRUE for ANY selection in the document, except for when the the start and end points match !!
-            lineIsPartiallySelected is the safer option to choose.
-            
-            So... can i combine these into one? 
-            Probably best to use the safer logic of lineIsPartiallySelected and extend it with union(p1,p2)
-        */
-
         function lineIsPartiallySelected() {
-            // Check if selection is contained within the bounds of the line (but not equal to)
-            const result = rangeContains(selection, line) && !rangeEquals(selection, line);
+            const result = rangeContainsPartial(line, selection);
             console.log('TRACE: lineIsPartiallySelected() ?: ', result);
             return result;
         }
 
-        function eitherParagraphsArePartiallySelected() {
-            // Both paragraphs are fully selected if:
-            //   - the start of the selection is equal to the start of paragraph 1.
-            //   - the end of the selection is equal to the end of paragraph 2.
-            //   - i.e. selection is equal to the union of both paragraphs
-            // Either paragraphs are only partially selected when this is not the case (only one needs to be true).
-            const result = !posEquals(selection.from, paragraphFrom.from) || !posEquals(selection.to, paragraphTo.to);
-            console.log('TRACE: eitherParagraphsArePartiallySelected() ?: ', result);
+        function lineIsFullySelectedAndIsAlsoAParagraph() {
+            const result = rangeEquals(selection, paragraph);
+            console.log('TRACE: lineIsFullySelectedAndIsAlsoAParagraph() ?: ', result);
             return result;
         }
 
-        function paragraphIsFullySelected() {
-            const result = rangeEquals(selection, paragraph);
-            console.log('TRACE: paragraphIsFullySelected() ?: ', result);
+        function oneOrMoreParagraphsArePartiallySelected() {
+            const union = getUnion(paragraphFrom, paragraphTo);
+            const result = rangeContainsPartial(union, selection);
+            console.log('TRACE: oneOrMoreParagraphsArePartiallySelected() ?: ', result);
             return result;
         }
 
@@ -134,6 +106,11 @@ export default class SelectionExpanderPluginImpl {
         function selectParagraph() {
             console.log('TRACE: selectParagraph()');
             $.setSelection(paragraph);
+        }
+        
+        function selectOneOrMoreParagraphs() {
+            console.log('TRACE: selectOneOrMoreParagraphs()');
+            $.setSelection(getUnion(paragraphFrom, paragraphTo)); // Still works if both ranges are the same paragraph
         }
 
         function selectDocument() {
@@ -152,27 +129,29 @@ export default class SelectionExpanderPluginImpl {
         const selection = toRange(from, to);
         const line = this.getLineRange(origin);
         const paragraph = this.getParagraphRange(origin);
-        const document = this.getDocumentRange();
+        const paragraphFrom = this.getParagraphRange(from);
+        const paragraphTo = this.getParagraphRange(to);
 
         if (nothingIsSelected()) {
             return;
 
-        // Something is selected
-        } else if (selectionIsOnSingleLine()) { 
+        } else if (selectionIsOnSingleLine()) { // Full or partial
             restoreOriginCursor();
-        
-        } else if (paragraphIsFullyOrPartiallySelected()) {
+
+        } else if (paragraphIsFullyOrPartiallySelected()) { // At least two lines, full or partial, within origin paragraph
             selectLine();
 
-        // TODO selection across multiple paragraphs
-
-        } else if (documentIsFullyOrPartiallySelected()) {
+        // } else if (multipleParagraphsAreFullyOrPartiallySelected()) {
+        //     selectPartialParagraph();
+            
+        } else {
+            // selectPartialParagraph(); // This also works
             selectParagraph();
         }
 
         function nothingIsSelected() {
             const result = $.isNothingSelected();
-            console.log('TRACE: nothingSelected() ?: ', result);
+            console.log('TRACE: nothingIsSelected() ?: ', result);
             return result;
         }
 
@@ -183,16 +162,16 @@ export default class SelectionExpanderPluginImpl {
         }
 
         function paragraphIsFullyOrPartiallySelected() {
-            const result = rangeContains(selection, paragraph);
+            const result = rangeContains(paragraph, selection);
             console.log('TRACE: paragraphIsFullyOrPartiallySelected() ?: ', result);
             return result;
         }
 
-        function documentIsFullyOrPartiallySelected() {
-            const result = rangeContains(selection, document);
-            console.log('TRACE: documentIsFullyOrPartiallySelected() ?: ', result);
-            return result;
-        }
+        // function multipleParagraphsAreFullyOrPartiallySelected() {
+        //     const result = rangeIntersects(paragraphFrom, selection) && rangeIntersects(paragraphTo, selection);
+        //     console.log('TRACE: multipleParagraphsAreFullyOrPartiallySelected() ?: ', result);
+        //     return result;
+        // }
 
         function restoreOriginCursor() {
             console.log('TRACE: restoreCursor()');
@@ -201,12 +180,18 @@ export default class SelectionExpanderPluginImpl {
 
         function selectLine() {
             console.log('TRACE: selectLine()');
-            $.setSelection(line);
+            $.setSelection(getIntersection(line, selection));
+        }
+
+        function selectPartialParagraph() {
+            console.log('TRACE: selectPartialParagraph()');
+            $.setSelection(getIntersection(paragraph, selection));
         }
 
         function selectParagraph() {
-            console.log('TRACE: selectParagraph()');
-            $.setSelection(paragraph);
+            // console.log('TRACE: selectParagraph()');
+            // $.setSelection(paragraph);
+            selectPartialParagraph();
         }
     }
 
@@ -215,9 +200,9 @@ export default class SelectionExpanderPluginImpl {
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
         // If origin cursor is not set, nothing is selected, or origin cursor is outside of the selection
-        if (!this.origin || 
-            this.isNothingSelected() || 
-            !rangeContainsPos(this.origin, toRange(from, to))
+        if (!this.origin ||
+            this.isNothingSelected() ||
+            !rangeContainsPos(toRange(from, to), this.origin)
         ) {
             console.log('(re)setting origin cursor to: ', JSON.stringify(anchor));
             this.origin = anchor;
@@ -266,20 +251,19 @@ export default class SelectionExpanderPluginImpl {
         const text = this.editor.getLine(lastLine);
         return toRange(toPos(0, 0), toPos(lastLine, text.length));
     }
-
 }
 
-/* === HELPER FUNCTIONS === */
 
-function toPos(line: number, ch: number): EditorPosition {
+
+export function toPos(line: number, ch: number): EditorPosition {
     return { line: line, ch: ch };
 }
-function toRange(from: EditorPosition, to: EditorPosition): EditorRange {
+export function toRange(from: EditorPosition, to: EditorPosition): EditorRange {
     return { from: from, to: to };
 }
-function toSelection(anchor: EditorPosition, head: EditorPosition): EditorSelection;
-function toSelection(range: EditorRange): EditorSelection;
-function toSelection(a: EditorPosition | EditorRange, b?: EditorPosition): EditorSelection {
+export function toSelection(anchor: EditorPosition, head: EditorPosition): EditorSelection;
+export function toSelection(range: EditorRange): EditorSelection;
+export function toSelection(a: EditorPosition | EditorRange, b?: EditorPosition): EditorSelection {
     if ("from" in a && "to" in a) {
         return { anchor: a.from, head: a.to };
     } else {
@@ -287,42 +271,65 @@ function toSelection(a: EditorPosition | EditorRange, b?: EditorPosition): Edito
         return { anchor: a, head: b };
     }
 }
-function posEquals(p1: EditorPosition, p2: EditorPosition): boolean {
-    return p1.line == p2.line && p1.ch == p2.ch;
+export function posEquals(a: EditorPosition, b: EditorPosition): boolean {
+    return a.line == b.line && a.ch == b.ch;
 }
-function posGTE(p1: EditorPosition, p2: EditorPosition): boolean {
-    if (p1.line < p2.line) return false;
-    if (p1.line > p2.line) return true;
-    return p1.ch >= p2.ch;
+export function posGTE(a: EditorPosition, b: EditorPosition): boolean {
+    if (a.line < b.line) return false;
+    if (a.line > b.line) return true;
+    return a.ch >= b.ch;
 }
-function posGT(p1: EditorPosition, p2: EditorPosition): boolean {
-    if (p1.line < p2.line) return false;
-    if (p1.line > p2.line) return true;
-    return p1.ch > p2.ch;
+export function posGT(a: EditorPosition, b: EditorPosition): boolean {
+    if (a.line < b.line) return false;
+    if (a.line > b.line) return true;
+    return a.ch > b.ch;
 }
-function posLTE(p1: EditorPosition, p2: EditorPosition): boolean {
-    if (p1.line < p2.line) return true;
-    if (p1.line > p2.line) return false;
-    return p1.ch <= p2.ch;
+export function posLTE(a: EditorPosition, b: EditorPosition): boolean {
+    if (a.line < b.line) return true;
+    if (a.line > b.line) return false;
+    return a.ch <= b.ch;
 }
-function posLT(p1: EditorPosition, p2: EditorPosition): boolean {
-    if (p1.line < p2.line) return true;
-    if (p1.line > p2.line) return false;
-    return p1.ch < p2.ch;
+export function posLT(a: EditorPosition, b: EditorPosition): boolean {
+    if (a.line < b.line) return true;
+    if (a.line > b.line) return false;
+    return a.ch < b.ch;
 }
-function rangeEquals(r1: EditorRange, r2: EditorRange): boolean {
-    return posEquals(r1.from, r2.from) && posEquals(r1.to, r2.to);
+export function rangeEquals(a: EditorRange, b: EditorRange): boolean {
+    return posEquals(a.from, b.from) && posEquals(a.to, b.to);
 }
-function rangeContains(r1: EditorRange, r2: EditorRange): boolean {
-    return posGTE(r1.from, r2.from) && posLTE(r1.to, r2.to);
+/** Fully or partial */
+export function rangeContains(a: EditorRange, b: EditorRange): boolean {
+    return posLTE(a.from, b.from) && posGTE(a.to, b.to);
 }
-function rangeContainsPos(pos: EditorPosition, range: EditorRange): boolean {
+/** Exclusively partial */
+export function rangeContainsPartial(a: EditorRange, b: EditorRange): boolean {
+    return rangeContains(a, b) && !rangeEquals(a, b);
+}
+export function rangeContainsPos(range: EditorRange, pos: EditorPosition): boolean {
     return posGTE(pos, range.from) && posLTE(pos, range.to);
 }
-function rangeOverlaps(r1: EditorRange, r2: EditorRange): boolean {
-    return posLTE(r1.from, r2.to) && posGTE(r1.to, r2.from);
+export function rangeIntersects(a: EditorRange, b: EditorRange): boolean {
+    return posLT(a.from, b.to) && posGT(a.to, b.from);
 }
-function getStackTrace(): string {
+export function getIntersection(a: EditorRange, b: EditorRange): EditorRange | null {
+    const from = posGTE(a.from, b.from) ? a.from : b.from;
+    const to = posLTE(a.to, b.to) ? a.to : b.to;
+    // Valid intersection exists only if from < to
+    if (posLT(from, to)) {
+        return { from, to };
+    }
+    return null;
+}
+export function getUnion(a: EditorRange, b: EditorRange): EditorRange {
+    const from = posLTE(a.from, b.from) ? a.from : b.from;
+    const to = posGTE(a.to, b.to) ? a.to : b.to;
+    return { from, to };
+}
+
+
+
+
+export function getStackTrace(): string {
     if ("captureStackTrace" in Error) {
         const obj = {};
         // Avoid getStackTrace itself in the stack trace
@@ -330,7 +337,7 @@ function getStackTrace(): string {
         const stacktrace = (obj as any).stack;
         // Process stacktrace - remove anything outside of this plugin
         const lines: string[] = [];
-        var quit = false;
+        let quit = false;
         stacktrace.split('\n').forEach((line: string) => {
             if (quit) return;
             line = line.trim();

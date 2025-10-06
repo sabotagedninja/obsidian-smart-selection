@@ -1,8 +1,9 @@
 
 NOTES
 
-Expand / Shrink Selection → common terminology used in IntelliJ, VS Code.
-Prepend plugin name with 'obsidian-'. See manifest.json
+Terminology: Expand / Shrink Selection → common terminology used in IntelliJ, VS Code.
+Naming (technical): Prepend plugin name with 'obsidian-'. See manifest.json
+The plugin is stateless. With every command, the current selection determines the next action.
 
 
 TODO
@@ -10,9 +11,9 @@ TODO
 - cleanup the algorithm and state vars in plugin
     - maybe use Code Mirror positions instead of indexes primarily? Only switch to indexes when its easier to work with in calculations.
 - fix shrinkSelection
-- write some more tests for expandSelection
+- write tests for expandSelection
 - write tests for shrinkSelection
-- create test for SimpleMockEditor
+- write tests for EditorStub
 
 - rename plugin to "Smart Select" (and remove the BETA part)
 - rename plugin class names internally to reflect new plugin name

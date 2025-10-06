@@ -64,10 +64,12 @@ export function removeCursorSymbols(str: string): string {
     return str.replace(/[|^]/g, '',)
 }
 
+// TODO expandSelection and shrinkSelection are almost identical. Merge and extract the differences.
+
 export function expandSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToExpand: number = 1) {
     // TODO add some explaining comments
-    var cursors = findCursorIndexes(textWithCursors);
-    var text = removeCursorSymbols(textWithCursors);
+    const cursors = findCursorIndexes(textWithCursors);
+    const text = removeCursorSymbols(textWithCursors);
     
     const editor = plugin.getEditor();
     editor.setValue(text);
@@ -76,6 +78,10 @@ export function expandSelection(plugin: SelectionExpanderPluginImpl, textWithCur
         editor.setCursor(editor.offsetToPos(cursors.anchor));
     } else {
         editor.setSelection(editor.offsetToPos(cursors.anchor), editor.offsetToPos(cursors.head));
+    }
+
+    if (cursors.origin) {
+        plugin['origin'] = editor.offsetToPos(cursors.origin);
     }
 
     while(numberOfTimesToExpand--) {
@@ -87,8 +93,8 @@ export function expandSelection(plugin: SelectionExpanderPluginImpl, textWithCur
 
 export function shrinkSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToShrink: number = 1) {
     // TODO add some explaining comments
-    var cursors = findCursorIndexes(textWithCursors);
-    var text = removeCursorSymbols(textWithCursors);
+    const cursors = findCursorIndexes(textWithCursors);
+    const text = removeCursorSymbols(textWithCursors);
 
     const editor = plugin.getEditor();
     editor.setValue(text);
