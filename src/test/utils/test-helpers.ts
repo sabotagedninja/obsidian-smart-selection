@@ -16,17 +16,24 @@ type CursorIndexes = {
     origin?: number;
 }
 
-// Valid cursor configurations:
-//   '|abc'     Caret (blinking cursor)
-//   '|abc|'    Selection
-//   '^abc|'    Forward selection
-//   '|abc^'    Backward selection
-//   '|ab^c|'   Selection with origin (used for shrinkSelection)
-// Invalid cursor configurations:
-//   'abc'      No cursors
-//   '^abc'     Origin cursor(s) without normal cursor(s)
-//   '|ab|c^'   Origin outside of selection
-//   '|a^b|c|'  Cursor count > 3
+/**
+ * 
+ * Valid cursor configurations:
+ *   '|abc'     Caret (blinking cursor)
+ *   '|abc|'    Selection
+ *   '^abc|'    Forward selection
+ *   '|abc^'    Backward selection
+ *   '|ab^c|'   Selection with origin (used for shrinkSelection)
+ * 
+ * Invalid cursor configurations:
+ *   'abc'      No cursors
+ *   '^abc'     Origin cursor(s) without normal cursor(s)
+ *   '|ab|c^'   Origin outside of selection
+ *   '|a^b|c|'  Cursor count > 3
+ * 
+ * @param str 
+ * @returns 
+ */
 export function findCursorIndexes(str: string): CursorIndexes {
     const cursorCount = (str.match(/[|^]/g) || []).length;
     if (!cursorCount) throw new Error("No cursors");
@@ -64,38 +71,21 @@ export function removeCursorSymbols(str: string): string {
     return str.replace(/[|^]/g, '',)
 }
 
-// TODO expandSelection and shrinkSelection are almost identical. Merge and extract the differences.
-
-export function expandSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToExpand: number = 1) {
-    // TODO add some explaining comments
-    const cursors = findCursorIndexes(textWithCursors);
-    const text = removeCursorSymbols(textWithCursors);
-    
-    const editor = plugin.getEditor();
-    editor.setValue(text);
-
-    if (!cursors.head) {
-        editor.setCursor(editor.offsetToPos(cursors.anchor));
-    } else {
-        editor.setSelection(editor.offsetToPos(cursors.anchor), editor.offsetToPos(cursors.head));
-    }
-
-    if (cursors.origin) {
-        plugin['origin'] = editor.offsetToPos(cursors.origin);
-    }
-
-    while(numberOfTimesToExpand--) {
-        plugin.expandSelection();
-    }
-
-    return editor.getSelection();
+export function expandSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToExpand: number = 1): string {
+    const expandFn = () => { plugin.expandSelection(); };
+    return expandOrShrinkSelection(plugin, textWithCursors, numberOfTimesToExpand, expandFn);
 }
 
-export function shrinkSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToShrink: number = 1) {
+export function shrinkSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimesToShrink: number = 1): string {
+    const shrinkFn = () => { plugin.shrinkSelection(); };
+    return expandOrShrinkSelection(plugin, textWithCursors, numberOfTimesToShrink, shrinkFn);
+}
+
+function expandOrShrinkSelection(plugin: SelectionExpanderPluginImpl, textWithCursors: string, numberOfTimes: number = 1, expandOrShrinkFunction: Function): string {
     // TODO add some explaining comments
     const cursors = findCursorIndexes(textWithCursors);
     const text = removeCursorSymbols(textWithCursors);
-
+    
     const editor = plugin.getEditor();
     editor.setValue(text);
 
@@ -109,11 +99,9 @@ export function shrinkSelection(plugin: SelectionExpanderPluginImpl, textWithCur
         plugin['origin'] = editor.offsetToPos(cursors.origin);
     }
 
-    while(numberOfTimesToShrink--) {
-        plugin.shrinkSelection();
+    while(numberOfTimes--) {
+        expandOrShrinkFunction();
     }
-    
-    console.log(cursors);
 
     return editor.getSelection();
 }

@@ -8,11 +8,6 @@ The plugin is stateless. With every command, the current selection determines th
 
 TODO
 
-- cleanup the algorithm and state vars in plugin
-    - maybe use Code Mirror positions instead of indexes primarily? Only switch to indexes when its easier to work with in calculations.
-- fix shrinkSelection
-- write tests for expandSelection
-- write tests for shrinkSelection
 - write tests for EditorStub
 
 - rename plugin to "Smart Select" (and remove the BETA part)
