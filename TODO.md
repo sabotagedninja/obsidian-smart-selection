@@ -10,8 +10,6 @@ TODO
 
 - write tests for EditorStub
 
-- rename plugin to "Smart Select" (and remove the BETA part)
-- rename plugin class names internally to reflect new plugin name
 - update manifest.json: (look at obsidian-plugin-sample)
     {
         "id": "obsidian-smart-select",
@@ -21,3 +19,4 @@ TODO
 // TODO register every important function call so that I can see the path travelled through the code - RedLine.register()
 // TODO remove log(TRACE)
 // TODO add some explaining comments to test-helpers.expandOrShrinkSelection()
+
