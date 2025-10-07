@@ -3,7 +3,8 @@
 	"name": "Smart Selection",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Cycle selection from caret to line, paragraph and document with repeated `Ctrl + A`. Reverse with `Ctrl + Shift + A`",
+	"description": "Expand and shrink selections intelligently by pressing `Ctrl + A` or `Ctrl + Shift + A`.",
 	"author": "sabotagedninja",
-	"authorUrl": "https://github.com/sabotagedninja/obsidian-extend-selection-wip"
+	"authorUrl": "https://github.com/sabotagedninja/obsidian-smart-selection",
+	"isDesktopOnly": false
 }
