@@ -1,8 +1,9 @@
 import type { Editor, EditorPosition, EditorSelection, EditorSelectionOrCaret, EditorRange, EditorTransaction, EditorChange, EditorCommandName } from 'obsidian';
 
 /**
- * Implementation of the Obsidian Editor type. Can be used by an extended class to selectively reimplement specific methods.
- * All methods throw Error('Method not implemented'). 
+ * Implementation of the Obsidian Editor type.
+ * Can be used by an extended class to selectively reimplement specific methods.
+ * All methods throw Error('Method not implemented').
  */
 abstract class AbstractEditor implements Editor {
     getDoc(): this {
@@ -44,13 +45,15 @@ abstract class AbstractEditor implements Editor {
     replaceRange(replacement: string, from: EditorPosition, to?: EditorPosition, origin?: string): void {
         throw new Error('Method not implemented');
     }
-    getCursor(string?: 'from' | 'to' | 'head' | 'anchor'): EditorPosition {
+    getCursor(which?: 'from' | 'to' | 'head' | 'anchor'): EditorPosition {
         throw new Error('Method not implemented');
     }
     listSelections(): EditorSelection[] {
         throw new Error('Method not implemented');
     }
-    setCursor(pos: EditorPosition | number, ch?: number): void {
+    setCursor(pos: EditorPosition): void;
+    setCursor(line: number, ch: number): void;
+    setCursor(pos: EditorPosition | /*line*/ number, ch?: number): void {
         throw new Error('Method not implemented');
     }
     setSelection(anchor: EditorPosition, head?: EditorPosition): void {
@@ -103,14 +106,20 @@ abstract class AbstractEditor implements Editor {
     }   
 }
 
-// TODO write unit test for EditorStub
-
 /**
- * Barebones/partial implementation of the Obsidian Editor type, build for testing the Smart Selection plugin.
+ * Barebones/partial implementation of the Obsidian Editor type, build for 
+ * testing the Smart Selection plugin.
+ * 
+ * Bare in mind that these methods have the bare minimum to no error checking.
+ * During normal use, a selection range can never overflow the text that it 
+ * has to select. It's practically kept in sync that way. 
+ * 
+ * In unit tests though, you can ofcourse set incompatible values. 
+ * Don't do that! You'll make Elmo cry :'(
  */
 export default class EditorStub extends AbstractEditor {
 
-    private lines: string[];
+    private lines: string[] = [];
     private pos: {
         from: EditorPosition;
         to: EditorPosition;
@@ -137,6 +146,21 @@ export default class EditorStub extends AbstractEditor {
     lastLine(): number {
         return this.lines.length - 1;
     }
+    getCursor(which?: 'from' | 'to' | 'head' | 'anchor'): EditorPosition {
+        // I don't know which option Obsidian defaults to. Anchor seems the most logical.
+        return this.pos[which ?? 'anchor'];
+    }
+    setCursor(pos: EditorPosition): void;
+    setCursor(line: number, ch: number): void;
+    setCursor(pos: EditorPosition | /*line*/ number, ch?: number): void {
+        let cursor: EditorPosition;
+        if (typeof pos === 'number') {
+            cursor = { line: pos, ch: ch ?? 0 };
+        } else {
+            cursor = pos;
+        }
+        this.pos = { from: cursor, to: cursor, head: cursor, anchor: cursor };
+    }
     somethingSelected(): boolean {
         return (
             this.pos.from.line !== this.pos.to.line ||
@@ -148,39 +172,22 @@ export default class EditorStub extends AbstractEditor {
         const end = this.posToOffset(this.pos.to);
         return this.getValue().slice(start, end);
     }
+    // In CodeMirror, a selection can either be a cursor or a range. That's why head is optional.
     setSelection(anchor: EditorPosition, head?: EditorPosition): void {
-        const startOffset = this.posToOffset(anchor);
-        const endOffset = this.posToOffset(head ?? anchor);
-        const from = startOffset <= endOffset ? anchor : head ?? anchor;
-        const to = startOffset <= endOffset ? head ?? anchor : anchor;
-        this.pos = {
-            from,
-            to,
-            anchor,
-            head: head ?? anchor,
-        };
+        if (!head) {
+            this.setCursor(anchor);
+        } else {
+            const startOffset = this.posToOffset(anchor);
+            const endOffset = this.posToOffset(head);
+            const from = startOffset <= endOffset ? anchor : head;
+            const to = startOffset <= endOffset ? head : anchor;
+            this.pos = { from, to, anchor, head };
+        }
     }
     getRange(from: EditorPosition, to: EditorPosition): string {
         const start = this.posToOffset(from);
         const end = this.posToOffset(to);
         return this.getValue().slice(start, end);
-    }
-    getCursor(which: 'from' | 'to' | 'head' | 'anchor' = 'anchor'): EditorPosition {
-        return this.pos[which];
-    }
-    setCursor(pos: EditorPosition | number, ch?: number): void {
-        let cursor: EditorPosition;
-        if (typeof pos === 'number') {
-            cursor = { line: pos, ch: ch ?? 0 };
-        } else {
-            cursor = pos;
-        }
-        this.pos = {
-            from: cursor,
-            to: cursor,
-            head: cursor,
-            anchor: cursor,
-        };
     }
     wordAt(pos: EditorPosition): EditorRange | null {
         const line = this.getLine(pos.line);
