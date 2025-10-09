@@ -5,19 +5,19 @@ It lets you expand or shrink selections step by step — from the cursor to a si
 
 ## ✨ Features
 
-- **Expand** or **shrink** **selections** logically by pressing a key combination.
-- Works with lines, paragraphs and lists.
-- Mimics modern IDE selection behavior (e.g., VS Code, JetBrains).
+- **Expand** or **shrink** selections logically by pressing a key combination.
+- Works with lines, paragraphs, lists and other elements.
+- Mimics modern IDE selection behavior (e.g., VS Code, IntelliJ).
 - Compatible with both Live Preview and Source Mode.
 - Fully configurable keyboard shortcuts.
-* Compatible with Obsidian v1.6.0 and later. — ==TODO== what is the version??
+- Compatible with Obsidian v1.0.0 and later (due to API compatibility with the `Editor` abstraction in `obsidian.d.ts` for CodeMirror 6).
 
 ## 🪄 Features in development
 
 - Selecting a **single word** — Right now, a line is the smallest increment.
 - **Heading + Segment** support — Selecting Heading + Segment combo as a logical unit.
 - **Code block** support — Selecting entire code block as a logical unit (does not work right now when the code block contains multiple consecutive blank lines).
-- **Table** support — Selecting contents of a cell, then row, then the entire table.
+- **Table** support — Selecting contents of a cell, row, and the entire table.
 - **Mobile** support via buttons in the ribbon menu.
 
 ## ⚙️ Installation
@@ -131,7 +131,7 @@ Contributions via bug reports, bug fixes, documentation, and general improvement
 
 ### Local development
 
-The codebase is written in TypeScript and uses `esbuild` / `node` for compilation; for a first time set up, all you should need to do is pull, install, and build:
+The codebase is written in TypeScript and uses `node` / `esbuild` for compilation; for a first time set up, all you should need to do is pull, install, and build:
 
 ```shell
 $ git clone git@github.com:sabotagedninja/obsidian-smart-selection.git
@@ -142,11 +142,13 @@ $ npm run dev
 
 This will install libraries and build the plugin. This will also put `esbuild` in watch mode, so any changes to the code will be re-compiled.
 
-**Tip**: Clone the repository inside `.obsidian/plugins/`. Use `Plugin Reloader` in Obsidian to manually reload the plugin after any change you want to test (faster than restarting Obsidian).
+**Tip:** Clone the repository inside the `.obsidian/plugins/` folder. Use the `Plugin Reloader` plugin in Obsidian to manually reload the plugin after any change you want to test (faster than restarting Obsidian).
 
 ## 💰 Support
 
-If you are enjoying this plugin then please support my work and enthusiasm by buying me a coffee on ==TODO== Buy Me A Coffee.
+If you are enjoying this plugin then please support my work and enthusiasm by buying me a coffee on https://buymeacoffee.com/sabotagedninja 
+
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="sabotagedninja" data-color="#FFDD00" data-emoji=""  data-font="Comic" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>
 
 ## 📄 License
 
