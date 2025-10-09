@@ -18,20 +18,21 @@ import {
 } from './functions'
 
 export default class SmartSelectionPluginImpl {
+
     private editor: Editor;
     private origin: EditorPosition;
 
-    setEditor(editor: Editor): void {
-        if (!editor)
-            throw new ReferenceError('argument cannot be null');
-        this.editor = editor;
-    }
     getEditor(): Editor {
         return this.editor;
     }
+
+    setEditor(editor: Editor): void {
+        if (!editor) throw new ReferenceError('argument cannot be null');
+        this.editor = editor;
+    }
+
     private checkEditor() {
-        if (!this.editor)
-            throw new ReferenceError('editor not set');
+        if (!this.editor) throw new ReferenceError('editor not set');
     }
 
     // Important to note: The origin cursor will only stay in effect when it is inside the selection range. 
@@ -84,56 +85,53 @@ export default class SmartSelectionPluginImpl {
             selectDocument();
         }
 
-        // TODO register every important function call so that I can see the path travelled through the code - RedLine.register()
-        // TODO remove log(TRACE)
-
         function nothingIsSelected() {
             const result = $.isNothingSelected();
-            console.log('TRACE: nothingIsSelected() ?: ', result);
+            // console.log('TRACE: nothingIsSelected() ?: ', result);
             return result;
         }
 
         function selectionIsOnSingleLine() {
             const result = from.line === to.line;
-            console.log('TRACE: selectionIsOnSingleLine() ?: ', result);
+            // console.log('TRACE: selectionIsOnSingleLine() ?: ', result);
             return result;
         }
 
         function lineIsPartiallySelected() {
             const result = rangeContainsPartial(line, selection);
-            console.log('TRACE: lineIsPartiallySelected() ?: ', result);
+            // console.log('TRACE: lineIsPartiallySelected() ?: ', result);
             return result;
         }
 
         function lineIsFullySelectedAndIsAlsoAParagraph() {
             const result = rangeEquals(paragraph, selection);
-            console.log('TRACE: lineIsFullySelectedAndIsAlsoAParagraph() ?: ', result);
+            // console.log('TRACE: lineIsFullySelectedAndIsAlsoAParagraph() ?: ', result);
             return result;
         }
 
         function oneOrMoreParagraphsArePartiallySelected() {
             const result = rangeContainsPartial(paragraphsFromTo, selection);
-            console.log('TRACE: oneOrMoreParagraphsArePartiallySelected() ?: ', result);
+            // console.log('TRACE: oneOrMoreParagraphsArePartiallySelected() ?: ', result);
             return result;
         }
 
         function selectLine() {
-            console.log('TRACE: selectLine()');
+            // console.log('TRACE: selectLine()');
             $.setSelection(line);
         }
 
         function selectParagraph() {
-            console.log('TRACE: selectParagraph()');
+            // console.log('TRACE: selectParagraph()');
             $.setSelection(paragraph);
         }
         
         function selectOneOrMoreParagraphs() {
-            console.log('TRACE: selectOneOrMoreParagraphs()');
+            // console.log('TRACE: selectOneOrMoreParagraphs()');
             $.setSelection(paragraphsFromTo);
         }
 
         function selectDocument() {
-            console.log('TRACE: selectDocument()');
+            // console.log('TRACE: selectDocument()');
             $.setSelection(document);
         }
     }
@@ -164,34 +162,34 @@ export default class SmartSelectionPluginImpl {
 
         function nothingIsSelected() {
             const result = $.isNothingSelected();
-            console.log('TRACE: nothingIsSelected() ?: ', result);
+            // console.log('TRACE: nothingIsSelected() ?: ', result);
             return result;
         }
 
         function selectionIsOnSingleLine() {
             const result = from.line === to.line;
-            console.log('TRACE: selectionIsOnSingleLine() ?: ', result);
+            // console.log('TRACE: selectionIsOnSingleLine() ?: ', result);
             return result;
         }
 
         function paragraphIsFullyOrPartiallySelected() {
             const result = rangeContains(paragraph, selection);
-            console.log('TRACE: paragraphIsFullyOrPartiallySelected() ?: ', result);
+            // console.log('TRACE: paragraphIsFullyOrPartiallySelected() ?: ', result);
             return result;
         }
 
         function restoreOriginCursor() {
-            console.log('TRACE: restoreCursor()');
+            // console.log('TRACE: restoreCursor()');
             $.setCursor(origin);
         }
 
         function selectLine() {
-            console.log('TRACE: selectLine()');
+            // console.log('TRACE: selectLine()');
             $.setSelection(getIntersection(line, selection)); // If line was partially selected, select only that part
         }
 
         function selectParagraph() {
-            console.log('TRACE: selectParagraph()');
+            // console.log('TRACE: selectParagraph()');
             $.setSelection(getIntersection(paragraph, selection)); // If paragraph was partially selected, select only that part
         }
     }
