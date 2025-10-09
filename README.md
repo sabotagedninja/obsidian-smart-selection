@@ -148,11 +148,12 @@ This will install libraries and build the plugin. This will also put `esbuild`�
 
 ## 💰 Support
 
-If you are enjoying this plugin then please support my work and enthusiasm by buying me a coffee on:
+If you are enjoying this plugin then please support my work and enthusiasm by buying me a coffee. Ninjas need coffee too :)
 
 <a href="https://www.buymeacoffee.com/sabotagedninja" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
 ## 📄 License
 
 MIT License © 2025 sabotagedninja 
+
 Smart Selection is an open-source community plugin for Obsidian.
