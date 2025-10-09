@@ -1,5 +1,6 @@
 import EditorStub from './stubs/obsidian-editor-stub';
-import SmartSelectionPluginImpl, { toPos, toRange, toSelection, posEquals, posGTE, posGT, posLTE, posLT, rangeEquals, rangeContains, rangeContainsPartial, rangeContainsPos, rangeIntersects, getIntersection, getUnion } from '../plugin/smart-selection-plugin-impl'
+import SmartSelectionPluginImpl from '../plugin/smart-selection-plugin-impl'
+import { toPos, toRange, toSelection, posEquals, posGTE, posGT, posLTE, posLT, rangeEquals, rangeContains, rangeContainsPartial, rangeContainsPos, rangeIntersects, getIntersection, getUnion } from '../plugin/functions'
 import { _, expandSelection, shrinkSelection } from './utils/test-helpers';
 
 const TWO_TIMES = 2;

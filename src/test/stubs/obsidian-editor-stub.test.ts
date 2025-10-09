@@ -1,5 +1,5 @@
 import { Editor } from 'obsidian';
-import { toPos, toRange, toSelection, posEquals, posGTE, posGT, posLTE, posLT, rangeEquals, rangeContains, rangeContainsPartial, rangeContainsPos, rangeIntersects, getIntersection, getUnion } from '../../plugin/smart-selection-plugin-impl'
+import { toPos, toRange, toSelection, posEquals, posGTE, posGT, posLTE, posLT, rangeEquals, rangeContains, rangeContainsPartial, rangeContainsPos, rangeIntersects, getIntersection, getUnion } from '../../plugin/functions'
 import EditorStub from './obsidian-editor-stub';
 import { _ } from '../utils/test-helpers';
 
