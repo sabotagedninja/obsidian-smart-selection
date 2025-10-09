@@ -7,7 +7,7 @@ export default class SmartSelectionPlugin extends Plugin {
 
     this.addCommand({
       id: 'smart-selection-expand',
-      name: 'Expand selection: caret → line → paragraph → document',
+      name: 'Expand selection',
       callback: () => this.expandSelection(),
       hotkeys: [
         {
@@ -19,7 +19,7 @@ export default class SmartSelectionPlugin extends Plugin {
 
     this.addCommand({
       id: 'smart-selection-shrink',
-      name: 'Shrink selection (reverse cycle)',
+      name: 'Shrink selection',
       callback: () => this.shrinkSelection(),
       hotkeys: [
         {
