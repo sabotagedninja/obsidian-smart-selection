@@ -13,8 +13,22 @@ describe('Plugin: SelectionExpanderPluginImpl', () => {
   beforeEach(() => {
     const editor = new EditorStub(); // Obsidian Editor stub
     plugin = new SmartSelectionPluginImpl();
+    // In the actual plugin code (main.ts), `plugin` is created once and setEditor() is called on every event.
     plugin.setEditor(editor);
 
+  });
+
+  describe('Plugin initialization', () => {
+    test('Calling setEditor(null) → throws ReferenceError ("argument cannot be null")', () => {
+      expect(() => plugin.setEditor(null)).toThrow();
+    });
+    test('Not calling setEditor() at all → throws ReferenceError ("editor not set")', () => {
+      // plugin.editor is initialized in beforeEach() and setEditor(null) throws an Error
+      // Therefor, set plugin.editor to null the javascript-way, bypassing typescript (private field)
+      plugin['editor'] = null;
+      // Call plugin here directly, since the helper method crashes because editor is null
+      expect(() => plugin.expandSelection()).toThrow();
+    });
   });
 
   describe('Function under test: expandSelection', () => {
@@ -157,6 +171,11 @@ describe('Plugin: SelectionExpanderPluginImpl', () => {
       test('Line partially selected → restores origin cursor (nothing selected)', () => {
         expect(shrinkSelection(plugin, _('abc . d|e^f | .. ghi . jkl'))).toBe(_(''));
         expect(plugin.getEditor().getCursor()).toStrictEqual(toPos(1, 2));
+        expect(plugin.getEditor().somethingSelected()).toBeFalsy();
+      });
+      test('No selection, just the cursor → nothing happens', () => {
+        expect(shrinkSelection(plugin, _('abc . def | .. ghi . jkl'))).toBe(_(''));
+        expect(plugin.getEditor().getCursor()).toStrictEqual(toPos(1, 3));
         expect(plugin.getEditor().somethingSelected()).toBeFalsy();
       });
     });
