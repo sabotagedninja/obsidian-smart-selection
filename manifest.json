@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-smart-selection",
+	"id": "smart-selection",
 	"name": "Smart Selection",
 	"version": "0.6.0",
 	"minAppVersion": "1.0.0",
 	"description": "Expand or shrink selections intelligently by pressing `Ctrl + A` or `Ctrl + Shift + A`.",
 	"author": "sabotagedninja",
-	"authorUrl": "https://github.com/sabotagedninja/obsidian-smart-selection",
+	"authorUrl": "https://github.com/sabotagedninja",
 	"isDesktopOnly": false
 }
