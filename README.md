@@ -1,11 +1,11 @@
 # Smart Selection
 
 **Smart Selection** makes selecting text in Obsidian more intuitive and efficient.  
-It lets you expand or shrink selections step by step — from the cursor to a single line to an entire paragraph — using well known keyboard shortcuts.
+It lets you expand or shrink selections step by step — from cursor to a single line to an entire paragraph — using well known keyboard shortcuts.
 
 ## ✨ Features
 
-- **Expand** or **shrink** selections logically by pressing a key combination.
+- **Expand** or **shrink** selections logically by pressing a key combination (`Ctrl + A` / `Ctrl + Shift + A`).
 - Works with lines, paragraphs, lists and other elements.
 - Mimics modern IDE selection behavior (e.g., VS Code, IntelliJ).
 - Compatible with both Live Preview and Source Mode.
@@ -15,10 +15,11 @@ It lets you expand or shrink selections step by step — from the cursor to a si
 ## 🪄 Features in development
 
 - Selecting a **single word** — Right now, a line is the smallest increment.
+- Selecting **quoted strings** and text between **parentheses**
 - **Heading + Segment** support — Selecting Heading + Segment combo as a logical unit.
 - **Code block** support — Selecting entire code block as a logical unit (does not work right now when the code block contains multiple consecutive blank lines).
 - **Table** support — Selecting contents of a cell, row, and the entire table.
-- **Mobile** support via buttons in the ribbon menu.
+- **Mobile** support via buttons in the ribbon menu — Now only supported via the Command palette.
 
 ## ⚙️ Installation
 
@@ -27,7 +28,7 @@ It lets you expand or shrink selections step by step — from the cursor to a si
 3. Click **Browse** and search for **Smart Selection**.  
 4. Click **Install**, then **Enable** the plugin.
 
-Or clone this repository and run it locally — See [[#Local Development]] for details. 
+Or clone this repository and run it locally — See [Local development](#local-development) for details. 
 
 ## 🔧 Setup
 
@@ -57,12 +58,12 @@ As of some one gently rapping, rapping at my chamber door.
 . . .
 ```
 
-With the cursor placed somewhere on the first line "Once upon a midnight dreary…":
+With the cursor placed somewhere on the first line `Once upon a midnight dreary…`:
 
 | Press            | Selection becomes                                                                                                       |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `Ctrl + A`       | The first line: <br>`"Once upon a midnight dreary, while I pondered, weak and weary,"`                                  |
-| `Ctrl + A` again | The entire paragraph: <br>`"Once upon a midnight dreary, while I pondered, weak and weary,`<br>`Over many a quaint..."` |
+| `Ctrl + A`       | The first line: <br>`Once upon a midnight dreary, while I pondered, weak and weary,`                                  |
+| `Ctrl + A` again | The entire paragraph: <br>`Once upon a midnight dreary, while I pondered, weak and weary,`<br>`Over many a quaint...` |
 | `Ctrl + A` again | The entire document                                                                                                     |
 |                  |                                                                                                                         |
 ### Example 2: Shrink selection
@@ -70,37 +71,37 @@ With the cursor placed somewhere on the first line "Once upon a midnight dreary�
 ```
 # The Raven - analysis
 
-- **Theme:** Grief, loss, and the descent into madness.
-- **Narrative voice:** First-person, unreliable narrator mourning his lost love, Lenore.
-- **Symbolism:**
-    - *The raven* = unrelenting memory, death, or fate.
-    - *Lenore* = idealized, unattainable beauty or lost purity.
-    - *Midnight/Darkness* = mental despair.
-- **Tone:** Melancholic, eerie, and obsessive.
-- **Structure:** 18 stanzas of six lines each; trochaic octameter with internal rhyme and refrain (“Nevermore”).
-- **Mood progression:** Calm → curious → desperate → hopeless.
-- **Central conflict:** Rational mind vs. emotional torment; search for meaning in suffering.
-- **Ending:** Final acceptance of eternal grief—soul trapped beneath the shadow of the raven.
+- THEME: Grief, loss, and the descent into madness.
+- NARRATIVE VOICE: First-person, unreliable narrator mourning his lost love, Lenore.
+- SYMBOLISM:
+    - The raven = unrelenting memory, death, or fate.
+    - Lenore = idealized, unattainable beauty or lost purity.
+    - Midnight/Darkness = mental despair.
+- TONE: Melancholic, eerie, and obsessive.
+- STRUCTURE: 18 stanzas of six lines each; trochaic octameter with internal rhyme and refrain (“Nevermore”).
+- MOOD PROGRESSION: Calm → curious → desperate → hopeless.
+- CENTRAL CONFLICT: Rational mind vs. emotional torment; search for meaning in suffering.
+- ENDING: Final acceptance of eternal grief—soul trapped beneath the shadow of the raven.
 ```
 
-With the cursor placed on the fourth line after `"- *The raven*"` and pressing `Ctrl + A` three times to select the entire document:
+With the cursor placed on the fourth line after `- The raven` and pressing `Ctrl + A` three times to select the entire document:
 
 | Press                    | Selection becomes                                                               |
 | ------------------------ | ------------------------------------------------------------------------------- |
 | `Ctrl + Shift + A`       | The entire paragraph with all the bullet points                                 |
-| `Ctrl + Shift + A` again | The fourth line:<br>`"    - *The raven* = unrelenting memory, death, or fate."` |
-| `Ctrl + Shift + A` again | Restores the original cursor position after `"- *The raven*"`                   |
+| `Ctrl + Shift + A` again | The fourth line:<br>`    - The raven = unrelenting memory, death, or fate.` |
+| `Ctrl + Shift + A` again | Restores the original cursor position after `- The raven`                   |
 
 ## 🧠 Core concepts
 
 - **Logical boundaries**  
-    The plugin expands or shrinks the current selection based on text structure rather than fixed character counts. Boundaries can be words, quoted strings, parentheses, list items, code blocks, or paragraph segments, depending on context.
+    The plugin expands or shrinks the current selection based on text structure rather than fixed character counts. Boundaries can be words, quoted strings, parentheses, list items, lines, code blocks, or paragraph segments, depending on context.
     
 - **Origin cursor**  
     The position of the caret before the first expansion is remembered as the **origin**. All subsequent expand/shrink operations are computed relative to this origin. It acts as the center of the selection behavior.
     
 - **Origin retention rule**  
-    The origin is kept only if it remains inside the current selection. If the user moves the selection so that the origin falls outside it, the origin resets to the current **selection anchor** (the fixed end of the selection). This ensures consistent direction and prevents erratic jumps.
+    The origin is kept only if it remains inside the current selection. A hidden side-effect to this is that if the user makes a selection while keeping the origin within the selection, the origin is still valid and expand/shrink operations will work, keeping the origin. If the user moves the selection so that the origin falls outside it, the origin resets to the current **selection anchor** (the fixed end of the selection). This ensures consistent direction and prevents erratic jumps.
     
 - **Stateless operation**  
     The plugin keeps no persistent state between commands (except for the origin cursor). Each invocation recalculates the selection purely from the editor’s current selection and cursor positions. There is no undo stack or memory of previous boundaries beyond what is visible in the editor.
@@ -109,7 +110,7 @@ With the cursor placed on the fourth line after `"- *The raven*"` and pressing `
     It never changes the document text. Only the highlighted range changes. Typing, deleting, or moving the cursor interrupts the Smart Selection flow naturally, since new selections become the new basis for calculation.
     
 - **Symmetric expansion and shrinking**  
-    Expand (`Ctrl+A`) moves outward to the next logical unit. Shrink (`Ctrl+Shift+A`) reverses that step, returning to the previous boundary — as long as it can be computed from the current selection and origin relationship.
+    Expand (`Ctrl+A`) moves outward to the next logical unit. Shrink (`Ctrl+Shift+A`) reverses that step, returning to the previous boundary — as long as it can be computed from the current selection and origin relationship. 
 
 ## 🧪 Troubleshooting
 
@@ -119,6 +120,7 @@ If the plugin doesn’t seem to respond:
 - Ensure you are in the editor (not the preview pane).
 - Have you tried turning it off and on again?
 - Try restarting Obsidian.
+- If all else fails, throw the computer out the window (I'm not liable for any damages caused).
 
 ## ⚠️ Known issues
 
@@ -146,12 +148,11 @@ This will install libraries and build the plugin. This will also put `esbuild`�
 
 ## 💰 Support
 
-If you are enjoying this plugin then please support my work and enthusiasm by buying me a coffee on https://buymeacoffee.com/sabotagedninja 
+If you are enjoying this plugin then please support my work and enthusiasm by buying me a coffee on:
 
-<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="sabotagedninja" data-color="#FFDD00" data-emoji=""  data-font="Comic" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>
+<a href="https://www.buymeacoffee.com/sabotagedninja" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
 ## 📄 License
 
 MIT License © 2025 sabotagedninja 
 Smart Selection is an open-source community plugin for Obsidian.
-
