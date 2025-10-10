@@ -1,11 +1,12 @@
 # Smart Selection
 
 **Smart Selection** makes selecting text in Obsidian more intuitive and efficient.  
-It lets you expand or shrink selections step by step — from cursor to a single line to an entire paragraph — using well known keyboard shortcuts.
+It lets you expand or shrink selections step by step — from cursor to a single line to an entire paragraph — using keyboard shortcuts.
 
 ## ✨ Features
 
-- **Expand** or **shrink** selections logically by pressing a key combination (`Ctrl + A` / `Ctrl + Shift + A`).
+- **Expand** or **shrink** selections logically by pressing a key combination 
+  (e.g `Ctrl + A` / `Ctrl + Shift + A` — you need to set it yourself after installation, see [Setup](#setup)).
 - Works with lines, paragraphs, lists and other elements.
 - Mimics modern IDE selection behavior (e.g., VS Code, IntelliJ).
 - Compatible with both Live Preview and Source Mode.
@@ -32,7 +33,7 @@ Or clone this repository and run it locally — See [Local development](#local-d
 
 ## 🔧 Setup
 
-Default keyboard shortcuts:
+Proposed keyboard shortcuts:
 
 | Action           | Windows/Linux      | macOS             |
 | ---------------- | ------------------ | ----------------- |
