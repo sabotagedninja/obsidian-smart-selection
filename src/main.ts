@@ -8,25 +8,17 @@ export default class SmartSelectionPlugin extends Plugin {
     this.addCommand({
       id: 'smart-selection-expand',
       name: 'Expand selection',
-      callback: () => this.expandSelection(),
-      hotkeys: [
-        {
-          modifiers: ['Mod'],
-          key: 'a'
-        }
-      ]
+      callback: () => this.expandSelection()
+      // Not allowd to provide a default hotkey
+      // I propose Ctrl + A
     });
 
     this.addCommand({
       id: 'smart-selection-shrink',
       name: 'Shrink selection',
-      callback: () => this.shrinkSelection(),
-      hotkeys: [
-        {
-          modifiers: ['Mod', 'Shift'],
-          key: 'a'
-        }
-      ]
+      callback: () => this.shrinkSelection()
+      // Not allowd to provide a default hotkey
+      // I propose Ctrl + Shift + A
     });
   }
 
