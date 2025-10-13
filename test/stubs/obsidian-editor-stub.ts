@@ -114,7 +114,7 @@ abstract class AbstractEditor implements Editor {
  * During normal use, a selection range can never overflow the text that it 
  * has to select. It's practically kept in sync that way. 
  * 
- * In unit tests though, you can ofcourse set incompatible values. 
+ * In unit tests though, you can of course set incompatible values. 
  * Don't do that! You'll make Elmo cry :'(
  */
 export default class EditorStub extends AbstractEditor {
