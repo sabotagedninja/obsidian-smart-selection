@@ -1,7 +1,7 @@
 {
 	"id": "smart-selection",
 	"name": "Smart Selection",
-	"version": "0.6.0",
+	"version": "0.6.4",
 	"minAppVersion": "1.0.0",
 	"description": "Expand or shrink selections intelligently by pressing a hotkey.",
 	"author": "sabotagedninja",
