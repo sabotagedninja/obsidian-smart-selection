@@ -17,7 +17,7 @@ Awaiting review and inclusion into the official community plugins list — excit
 - Fully configurable keyboard shortcuts.
 - Compatible with Obsidian v1.0.0 and later (due to API compatibility with the `Editor` abstraction in `obsidian.d.ts` for CodeMirror 6).
 
-## 🪄 Features in development
+## 🪄 Roadmap
 
 - Selecting a **single word** — Right now, a line is the smallest increment.
 - Selecting **quoted strings** and text between **parentheses**
