@@ -6,7 +6,7 @@ It lets you expand or shrink selections step by step — from cursor to a single
 ## ✨ Features
 
 - **Expand** or **shrink** selections logically by pressing a key combination 
-  (e.g `Ctrl + A` / `Ctrl + Shift + A` — you need to set it yourself after installation, see [Setup](#setup)).
+  (e.g `Ctrl + A` / `Ctrl + Shift + A` — you need to set it yourself after installation, see [Setup](#-setup)).
 - Works with lines, paragraphs, lists and other elements.
 - Mimics modern IDE selection behavior (e.g., VS Code, IntelliJ).
 - Compatible with both Live Preview and Source Mode.
