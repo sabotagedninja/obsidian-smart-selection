@@ -10,6 +10,7 @@ Awaiting review and inclusion into the official community plugins list — excit
 ## ✨ Features
 
 - **Expand** or **shrink** selections logically by pressing a key combination
+  
   (e.g `Ctrl + A` / `Ctrl + Shift + A` — you need to set it yourself after installation, see [Setup](#-setup)).
 - Works with lines, paragraphs, lists and other elements.
 - Mimics modern IDE selection behavior (e.g., VS Code, IntelliJ).
