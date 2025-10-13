@@ -3,6 +3,10 @@
 **Smart Selection** makes selecting text in Obsidian more intuitive and efficient.  
 It lets you expand or shrink selections step by step — from cursor to a single line to an entire paragraph — using keyboard shortcuts.
 
+## 📰 Latest news
+
+Awaiting review and inclusion into the official community plugins list — exciting :D
+
 ## ✨ Features
 
 - **Expand** or **shrink** selections logically by pressing a key combination 
