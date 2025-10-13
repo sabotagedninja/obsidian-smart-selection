@@ -84,30 +84,3 @@ export function getUnion(a: EditorRange, b: EditorRange): EditorRange {
     const to = posGTE(a.to, b.to) ? a.to : b.to;
     return { from, to };
 }
-
-
-
-
-export function getStackTrace(): string {
-    if ("captureStackTrace" in Error) {
-        const obj = {};
-        // Avoid getStackTrace itself in the stack trace
-        Error.captureStackTrace(obj, getStackTrace);
-        const stacktrace = (obj as any).stack;
-        // Process stacktrace - remove anything outside of this plugin
-        const lines: string[] = [];
-        let quit = false;
-        stacktrace.split('\n').forEach((line: string) => {
-            if (quit) return;
-            line = line.trim();
-            if (line == 'Error:') return;
-            line = line.replace('SmartSelectionPluginImpl.', '').replace(/^at\s/, '').replace(/\(.+?\)/, '');
-            lines.push("  " + line);
-            if (line.includes('expandSelection') || line.includes('shrinkSelection')) {
-                quit = true;
-            }
-        });
-        return "Stacktrace:\n" + lines.join('\n');
-    }
-    return null;
-}

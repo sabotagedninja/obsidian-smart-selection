@@ -1,6 +1,6 @@
 import EditorStub from './stubs/obsidian-editor-stub';
-import SmartSelectionPluginImpl from '../plugin/smart-selection-plugin-impl'
-import { toPos, toRange, toSelection, posEquals, posGTE, posGT, posLTE, posLT, rangeEquals, rangeContains, rangeContainsPartial, rangeContainsPos, rangeIntersects, getIntersection, getUnion } from '../plugin/functions'
+import SmartSelectionPluginImpl from '../src/smart-selection-plugin-impl'
+import { toPos, toRange, toSelection, posEquals, posGTE, posGT, posLTE, posLT, rangeEquals, rangeContains, rangeContainsPartial, rangeContainsPos, rangeIntersects, getIntersection, getUnion } from '../src/functions'
 import { _, expandSelection, shrinkSelection } from './utils/test-helpers';
 
 const TWO_TIMES = 2;
@@ -15,17 +15,13 @@ describe('Plugin: SelectionExpanderPluginImpl', () => {
     plugin = new SmartSelectionPluginImpl();
     // In the actual plugin code (main.ts), `plugin` is created once and setEditor() is called on every event.
     plugin.setEditor(editor);
-
   });
 
   describe('Plugin initialization', () => {
-    test('Calling setEditor(null) → throws ReferenceError ("argument cannot be null")', () => {
-      expect(() => plugin.setEditor(null)).toThrow();
-    });
     test('Not calling setEditor() at all → throws ReferenceError ("editor not set")', () => {
-      // plugin.editor is initialized in beforeEach() and setEditor(null) throws an Error
-      // Therefor, set plugin.editor to null the javascript-way, bypassing typescript (private field)
-      plugin['editor'] = null;
+      // Plugin is initialized in beforeEach() where the editor is also set.
+      // Therefor, create a new instance and don't set editor (for this test only!).
+      plugin = new SmartSelectionPluginImpl();
       // Call plugin here directly, since the helper method crashes because editor is null
       expect(() => plugin.expandSelection()).toThrow();
     });

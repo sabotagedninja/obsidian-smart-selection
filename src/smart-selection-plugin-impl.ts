@@ -27,7 +27,6 @@ export default class SmartSelectionPluginImpl {
     }
 
     setEditor(editor: Editor): void {
-        if (!editor) throw new ReferenceError('argument cannot be null');
         this.editor = editor;
     }
 

@@ -1,5 +1,5 @@
 import { Editor, MarkdownView, Plugin } from 'obsidian';
-import SmartSelectionPluginImpl from 'src/plugin/smart-selection-plugin-impl';
+import SmartSelectionPluginImpl from './smart-selection-plugin-impl';
 
 export default class SmartSelectionPlugin extends Plugin {
 

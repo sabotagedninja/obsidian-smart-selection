@@ -1,4 +1,4 @@
-import SmartSelectionPluginImpl from 'src/plugin/smart-selection-plugin-impl';
+import SmartSelectionPluginImpl from 'src/smart-selection-plugin-impl';
 
 
 /**
