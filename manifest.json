@@ -6,5 +6,11 @@
 	"description": "Expand or shrink selections intelligently by pressing a hotkey.",
 	"author": "sabotagedninja",
 	"authorUrl": "https://github.com/sabotagedninja",
-	"isDesktopOnly": false
+	"isDesktopOnly": false,
+	"fundingUrl": {
+		"Buy Me a Coffee": "https://buymeacoffee.com/sabotagedninja",
+		"Ko-fi": "https://ko-fi.com/sabotagedninja",
+		"GitHub Sponsor": "https://github.com/sponsors/sabotagedninja",
+		"thanks.dev": "https://thanks.dev/u/gh/sabotagedninja"
+	}
 }
