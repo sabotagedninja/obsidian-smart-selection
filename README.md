@@ -11,7 +11,7 @@ Awaiting review and inclusion into the official community plugins list — excit
 
 - **Expand** or **shrink** selections logically by pressing a key combination
   
-  (e.g `Ctrl + A` / `Ctrl + Shift + A` — you need to set it yourself after installation, see [Setup](#-setup)).
+  (e.g `Ctrl + A` / `Ctrl + Shift + A` — you *must* set these manually after installation, see [Setup](#-setup)).
 - Works with lines, paragraphs, lists and other elements.
 - Mimics modern IDE selection behavior (e.g., VS Code, IntelliJ).
 - Compatible with both Live Preview and Source Mode.
@@ -38,6 +38,10 @@ Or clone this repository and run it locally — See [Local development](#local-d
 
 ## 🔧 Setup
 
+**Important:** You *must* set keyboard shortcuts manually after installation, or this plugin won't do anything!
+
+Sadly, providing default keyboard shortcuts is strongly discouraged in the plugin guidelines (the reasoning is understandable) and ultimately not allowed during the review process of adding the plugin to the official community plugins list.
+
 Proposed keyboard shortcuts:
 
 | Action           | Windows/Linux      | macOS             |
@@ -50,6 +54,9 @@ You can change these in **Settings → Hotkeys → Smart Selection**.
 ## 🧩 Using the plugin
 
 Each time you press the shortcut, Smart Selection analyzes the current cursor position and expands (or shrinks) the selection to the next logical boundary.
+
+*Remember: You must set keyboard shortcuts manually after installation (see [Setup](#-setup)).*
+
 ### Example 1: Expand selection
 ```
 # The Raven - by Edgar Allan Poe
