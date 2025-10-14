@@ -44,12 +44,17 @@ Sadly, providing default keyboard shortcuts is strongly discouraged in the plugi
 
 Proposed keyboard shortcuts:
 
-| Action           | Windows/Linux      | macOS             |
-| ---------------- | ------------------ | ----------------- |
-| Expand selection | `Ctrl + A`         | `Cmd + A`         |
-| Shrink selection | `Ctrl + Shift + A` | `Cmd + Shift + A` |
+| Action           | Windows/Linux                                                                            | macOS                                               |
+| ---------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Expand selection | Ctrl + A<br>Shift + Alt + Right <sup>1)</sup><br>Shift + Alt + Up <sup>2)</sup>          | ⌘ A<br>⌃ ⇧ ⌘ → <sup>1)</sup><br>⌥ ↑ <sup>2)</sup>   |
+| Shrink selection | Ctrl + Shift + A<br>Shift + Alt + Left <sup>1)</sup><br>Shift + Alt + Down <sup>1)</sup> | ⌘ ⇧ A<br>⌃ ⇧ ⌘ ← <sup>1)</sup><br>⌥ ↓ <sup>2)</sup> |
+
+<sup>1)</sup> VS Code
+<sup>2)</sup> IntelliJ
 
 You can change these in **Settings → Hotkeys → Smart Selection**.
+
+**Disclaimer:** I have not tested this plugin nor the proposed keyboard shortcuts on Linux and macOS — *Any feedback is welcome!*
 
 ## 🧩 Using the plugin
 
@@ -134,6 +139,8 @@ If the plugin doesn’t seem to respond:
 - Have you tried turning it off and on again?
 - Try restarting Obsidian.
 - If all else fails, throw the computer out the window (I'm not liable for any damages caused).
+
+**Disclaimer:** I have not tested this plugin nor the proposed keyboard shortcuts on Linux and macOS — *Any feedback is welcome!*
 
 ## ⚠️ Known issues
 
