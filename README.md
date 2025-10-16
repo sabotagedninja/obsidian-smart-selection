@@ -21,9 +21,9 @@ Awaiting review and inclusion into the official community plugins list — excit
 ## 🪄 Roadmap
 
 - Selecting a **single word** — Right now, a line is the smallest increment.
-- Selecting **quoted strings** and text between **parentheses**
-- **Heading + Segment** support — Selecting Heading + Segment combo as a logical unit.
+- **Heading + Section** support — Selecting Heading + Section combo as a logical unit.
 - **Code block** support — Selecting entire code block as a logical unit (does not work right now when the code block contains multiple consecutive blank lines).
+- Selecting text between delimiters like **"quotes"**, **(parentheses)**, **<{[brackets]}>**, but also **\*\*asterisks\*\*** and **\_other\_** **\=\=characters\=\=** — very useful when editing markdown.
 - **Table** support — Selecting contents of a cell, row, and the entire table.
 - **Mobile** support via buttons in the ribbon menu — Now only supported via the Command palette.
 
@@ -47,7 +47,7 @@ Proposed keyboard shortcuts:
 | Action           | Windows/Linux                                                                            | macOS                                               |
 | ---------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | Expand selection | Ctrl + A<br>Shift + Alt + Right <sup>1)</sup><br>Shift + Alt + Up <sup>2)</sup>          | ⌘ A<br>⌃ ⇧ ⌘ → <sup>1)</sup><br>⌥ ↑ <sup>2)</sup>   |
-| Shrink selection | Ctrl + Shift + A<br>Shift + Alt + Left <sup>1)</sup><br>Shift + Alt + Down <sup>1)</sup> | ⌘ ⇧ A<br>⌃ ⇧ ⌘ ← <sup>1)</sup><br>⌥ ↓ <sup>2)</sup> |
+| Shrink selection | Ctrl + Shift + A<br>Shift + Alt + Left <sup>1)</sup><br>Shift + Alt + Down <sup>2)</sup> | ⌘ ⇧ A<br>⌃ ⇧ ⌘ ← <sup>1)</sup><br>⌥ ↓ <sup>2)</sup> |
 
 <sup>1)</sup> VS Code
 <sup>2)</sup> IntelliJ
@@ -113,7 +113,7 @@ With the cursor placed on the fourth line after `- The raven` and pressing `Ctrl
 ## 🧠 Core concepts
 
 - **Logical boundaries**  
-    The plugin expands or shrinks the current selection based on text structure rather than fixed character counts. Boundaries can be words, quoted strings, parentheses, list items, lines, code blocks, or paragraph segments, depending on context.
+    The plugin expands or shrinks the current selection based on text structure rather than fixed character counts. Boundaries can be words, quoted strings, parentheses, list items, lines, code blocks, or paragraph sections, depending on context.
     
 - **Origin cursor**  
     The position of the caret before the first expansion is remembered as the **origin**. All subsequent expand/shrink operations are computed relative to this origin. It acts as the center of the selection behavior.
