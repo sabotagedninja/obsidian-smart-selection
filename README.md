@@ -5,6 +5,8 @@ It lets you expand or shrink selections step by step — from cursor to a single
 
 ## 📰 Latest news
 
+16-10-2025 — New release **[0.7.0](https://github.com/sabotagedninja/obsidian-smart-selection/releases/tag/0.7.0)** is out now!
+
 Awaiting review and inclusion into the official community plugins list — exciting :D
 
 ## ✨ Features
@@ -20,7 +22,7 @@ Awaiting review and inclusion into the official community plugins list — excit
 
 ## 🪄 Roadmap
 
-- [x] ~~Selecting a **single word** — Right now, a line is the smallest increment.~~ (release [0.7.0](https://github.com/sabotagedninja/obsidian-smart-selection/releases/tag/0.7.0))
+- [x] ~~Selecting a **single word** — Right now, a line is the smallest increment.~~ (release **[0.7.0](https://github.com/sabotagedninja/obsidian-smart-selection/releases/tag/0.7.0)**)
 - **Heading + Section** support — Selecting Heading + Section combo as a logical unit.
 - **Code block** support — Selecting entire code block as a logical unit (does not work right now when the code block contains multiple consecutive blank lines).
 - Selecting text between delimiters like **"quotes"**, **(parentheses)**, **<{[brackets]}>**, but also **\*\*asterisks\*\*** and **\_other\_** **\=\=characters\=\=** — very useful when editing markdown.
