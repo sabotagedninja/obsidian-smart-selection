@@ -12,7 +12,7 @@ Awaiting review and inclusion into the official community plugins list — excit
 - **Expand** or **shrink** selections logically by pressing a key combination
   
   (e.g `Ctrl + A` / `Ctrl + Shift + A` — you *must* set these manually after installation, see [Setup](#-setup)).
-- Works with lines, paragraphs, lists and other elements.
+- Works with words, lines, paragraphs, lists and other elements.
 - Mimics modern IDE selection behavior (e.g., VS Code, IntelliJ).
 - Compatible with both Live Preview and Source Mode.
 - Fully configurable keyboard shortcuts.
@@ -20,7 +20,7 @@ Awaiting review and inclusion into the official community plugins list — excit
 
 ## 🪄 Roadmap
 
-- Selecting a **single word** — Right now, a line is the smallest increment.
+- [x] ~~Selecting a **single word** — Right now, a line is the smallest increment.~~ (release [0.7.0](https://github.com/sabotagedninja/obsidian-smart-selection/releases/tag/0.7.0))
 - **Heading + Section** support — Selecting Heading + Section combo as a logical unit.
 - **Code block** support — Selecting entire code block as a logical unit (does not work right now when the code block contains multiple consecutive blank lines).
 - Selecting text between delimiters like **"quotes"**, **(parentheses)**, **<{[brackets]}>**, but also **\*\*asterisks\*\*** and **\_other\_** **\=\=characters\=\=** — very useful when editing markdown.
@@ -76,14 +76,16 @@ As of some one gently rapping, rapping at my chamber door.
 . . .
 ```
 
-With the cursor placed somewhere on the first line `Once upon a midnight dreary…`:
+With the cursor placed on `midnight` on the first line `Once upon a midnight dreary…`:
 
 | Press            | Selection becomes                                                                                                       |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `Ctrl + A`       | The first line: <br>`Once upon a midnight dreary, while I pondered, weak and weary,`                                  |
-| `Ctrl + A` again | The entire paragraph: <br>`Once upon a midnight dreary, while I pondered, weak and weary,`<br>`Over many a quaint...` |
+| `Ctrl + A`       | The word: <br>`midnight`                                                                                                |
+| `Ctrl + A` again | The first line: <br>`Once upon a midnight dreary, while I pondered, weak and weary,`                                    |
+| `Ctrl + A` again | The entire paragraph: <br>`Once upon a midnight dreary, while I pondered, weak and weary,`<br>`Over many a quaint...`   |
 | `Ctrl + A` again | The entire document                                                                                                     |
 |                  |                                                                                                                         |
+
 ### Example 2: Shrink selection
 
 ```
@@ -102,13 +104,14 @@ With the cursor placed somewhere on the first line `Once upon a midnight dreary�
 - ENDING: Final acceptance of eternal grief—soul trapped beneath the shadow of the raven.
 ```
 
-With the cursor placed on the fourth line after `- The raven` and pressing `Ctrl + A` three times to select the entire document:
+With the cursor placed on the fourth line directly after `- The raven` and pressing `Ctrl + A` three times to select the entire document:
 
 | Press                    | Selection becomes                                                               |
 | ------------------------ | ------------------------------------------------------------------------------- |
 | `Ctrl + Shift + A`       | The entire paragraph with all the bullet points                                 |
-| `Ctrl + Shift + A` again | The fourth line:<br>`    - The raven = unrelenting memory, death, or fate.` |
-| `Ctrl + Shift + A` again | Restores the original cursor position after `- The raven`                   |
+| `Ctrl + Shift + A` again | The fourth line:<br>`    - The raven = unrelenting memory, death, or fate.`     |
+| `Ctrl + Shift + A` again | The word: `raven`                                                               |
+| `Ctrl + Shift + A` again | Restores the original cursor position after `raven`                             |
 
 ## 🧠 Core concepts
 
