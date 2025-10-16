@@ -1,112 +1,6 @@
 import type { Editor, EditorPosition, EditorSelection, EditorSelectionOrCaret, EditorRange, EditorTransaction, EditorChange, EditorCommandName } from 'obsidian';
 
 /**
- * Implementation of the Obsidian Editor type.
- * Can be used by an extended class to selectively reimplement specific methods.
- * All methods throw Error('Method not implemented').
- */
-abstract class AbstractEditor implements Editor {
-    getDoc(): this {
-        throw new Error('Method not implemented');
-    }
-    refresh(): void {
-        throw new Error('Method not implemented');
-    }
-    getValue(): string {
-        throw new Error('Method not implemented');
-    }
-    setValue(content: string): void {
-        throw new Error('Method not implemented');
-    }
-    getLine(line: number): string {
-        throw new Error('Method not implemented');
-    }
-    setLine(n: number, text: string): void {
-        throw new Error('Method not implemented');
-    }
-    lineCount(): number {
-        throw new Error('Method not implemented');
-    }
-    lastLine(): number {
-        throw new Error('Method not implemented');
-    }
-    getSelection(): string {
-        throw new Error('Method not implemented');
-    }
-    somethingSelected(): boolean {
-        throw new Error('Method not implemented');
-    }
-    getRange(from: EditorPosition, to: EditorPosition): string {
-        throw new Error('Method not implemented');
-    }
-    replaceSelection(replacement: string, origin?: string): void {
-        throw new Error('Method not implemented');
-    }
-    replaceRange(replacement: string, from: EditorPosition, to?: EditorPosition, origin?: string): void {
-        throw new Error('Method not implemented');
-    }
-    getCursor(which?: 'from' | 'to' | 'head' | 'anchor'): EditorPosition {
-        throw new Error('Method not implemented');
-    }
-    listSelections(): EditorSelection[] {
-        throw new Error('Method not implemented');
-    }
-    setCursor(pos: EditorPosition): void;
-    setCursor(line: number, ch: number): void;
-    setCursor(pos: EditorPosition | /*line*/ number, ch?: number): void {
-        throw new Error('Method not implemented');
-    }
-    setSelection(anchor: EditorPosition, head?: EditorPosition): void {
-        throw new Error('Method not implemented');
-    }
-    setSelections(ranges: EditorSelectionOrCaret[], main?: number): void {
-        throw new Error('Method not implemented');
-    }
-    focus(): void {
-        throw new Error('Method not implemented');
-    }
-    blur(): void {
-        throw new Error('Method not implemented');
-    }
-    hasFocus(): boolean {
-        throw new Error('Method not implemented');
-    }
-    getScrollInfo(): { top: number; left: number; } {
-        throw new Error('Method not implemented');
-    }
-    scrollTo(x?: number | null, y?: number | null): void {
-        throw new Error('Method not implemented');
-    }
-    scrollIntoView(range: EditorRange, center?: boolean): void {
-        throw new Error('Method not implemented');
-    }
-    undo(): void {
-        throw new Error('Method not implemented');
-    }
-    redo(): void {
-        throw new Error('Method not implemented');
-    }
-    exec(command: EditorCommandName): void {
-        throw new Error('Method not implemented');
-    }
-    transaction(tx: EditorTransaction, origin?: string): void {
-        throw new Error('Method not implemented');
-    }
-    wordAt(pos: EditorPosition): EditorRange | null {
-        throw new Error('Method not implemented');
-    }
-    posToOffset(pos: EditorPosition): number {
-        throw new Error('Method not implemented');
-    }
-    offsetToPos(offset: number): EditorPosition {
-        throw new Error('Method not implemented');
-    }
-    processLines<T>(read: (line: number, lineText: string) => T | null, write: (line: number, lineText: string, value: T | null) => EditorChange | void, ignoreEmpty?: boolean): void {
-        throw new Error('Method not implemented');
-    }   
-}
-
-/**
  * Barebones/partial implementation of the Obsidian Editor type, build for 
  * testing the Smart Selection plugin.
  * 
@@ -117,7 +11,7 @@ abstract class AbstractEditor implements Editor {
  * In unit tests though, you can of course set incompatible values. 
  * Don't do that! You'll make Elmo cry :'(
  */
-export default class EditorStub extends AbstractEditor {
+export default class EditorStub implements Editor {
 
     private lines: string[] = [];
     private pos: {
@@ -127,9 +21,6 @@ export default class EditorStub extends AbstractEditor {
         anchor: EditorPosition;
     };
 
-    constructor() {
-        super();
-    }
     getValue(): string {
         return this.lines.join('\n');
     }
@@ -226,5 +117,64 @@ export default class EditorStub extends AbstractEditor {
             line: this.lines.length - 1,
             ch: this.lines[this.lines.length - 1].length,
         };
+    }
+
+    /*******************************************************************************/
+    /*** Unimplemented methods - not used in this stub ***/
+    /*******************************************************************************/
+
+    getDoc(): this {
+        throw new Error('Method not implemented');
+    }
+    refresh(): void {
+        throw new Error('Method not implemented');
+    }
+    setLine(n: number, text: string): void {
+        throw new Error('Method not implemented');
+    }
+    replaceSelection(replacement: string, origin?: string): void {
+        throw new Error('Method not implemented');
+    }
+    replaceRange(replacement: string, from: EditorPosition, to?: EditorPosition, origin?: string): void {
+        throw new Error('Method not implemented');
+    }
+    listSelections(): EditorSelection[] {
+        throw new Error('Method not implemented');
+    }
+    setSelections(ranges: EditorSelectionOrCaret[], main?: number): void {
+        throw new Error('Method not implemented');
+    }
+    focus(): void {
+        throw new Error('Method not implemented');
+    }
+    blur(): void {
+        throw new Error('Method not implemented');
+    }
+    hasFocus(): boolean {
+        throw new Error('Method not implemented');
+    }
+    getScrollInfo(): { top: number; left: number; } {
+        throw new Error('Method not implemented');
+    }
+    scrollTo(x?: number | null, y?: number | null): void {
+        throw new Error('Method not implemented');
+    }
+    scrollIntoView(range: EditorRange, center?: boolean): void {
+        throw new Error('Method not implemented');
+    }
+    undo(): void {
+        throw new Error('Method not implemented');
+    }
+    redo(): void {
+        throw new Error('Method not implemented');
+    }
+    exec(command: EditorCommandName): void {
+        throw new Error('Method not implemented');
+    }
+    transaction(tx: EditorTransaction, origin?: string): void {
+        throw new Error('Method not implemented');
+    }
+    processLines<T>(read: (line: number, lineText: string) => T | null, write: (line: number, lineText: string, value: T | null) => EditorChange | void, ignoreEmpty?: boolean): void {
+        throw new Error('Method not implemented');
     }
 }

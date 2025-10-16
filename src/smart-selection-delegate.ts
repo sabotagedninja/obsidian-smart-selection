@@ -1,4 +1,4 @@
-import { Editor, EditorPosition, EditorRange, EditorSelection } from 'obsidian';
+import { Editor, EditorPosition, EditorRange } from 'obsidian';
 import {
     toPos, 
     toRange, 
@@ -14,10 +14,11 @@ import {
     rangeContainsPos, 
     rangeIntersects, 
     getIntersection, 
-    getUnion, 
+    getUnion
 } from './functions'
+import { debug, trace_r } from './dev-utils';
 
-export default class SmartSelectionPluginImpl {
+export default class SmartSelectionDelegate {
 
     private editor: Editor;
     private origin: EditorPosition;
@@ -42,6 +43,7 @@ export default class SmartSelectionPluginImpl {
     // Same for paragraph and document (but there is only just he one document :)
 
     expandSelection(): void {
+        trace_r();
         this.checkEditor();
         this.initOriginCursor();
         const $ = this; // Scope variable for nested functions
@@ -49,6 +51,7 @@ export default class SmartSelectionPluginImpl {
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
         const selection = toRange(from, to);
+        const word = this.getWordRange(origin);
         const line = this.getLineRange(origin);
         const paragraph = this.getParagraphRange(origin);
         const paragraphFrom = this.getParagraphRange(from);
@@ -57,17 +60,23 @@ export default class SmartSelectionPluginImpl {
         const document = this.getDocumentRange();
 
         if (nothingIsSelected()) {
-            selectLine();
+            selectWord();
             if (nothingIsSelected()) { // Blank line
-                selectParagraph();
-                if (nothingIsSelected()) { // Blank line surrounded by blank lines
-                    selectDocument();
+                // TODO what is the next logical step?
+                selectLine();
+                if (nothingIsSelected()) { // Blank line
+                    selectParagraph();
+                    if (nothingIsSelected()) { // Blank line surrounded by blank lines
+                        selectDocument();
+                    }
                 }
             }
 
             // Something is selected
         } else if (selectionIsOnSingleLine()) {
-            if (lineIsPartiallySelected()) {
+            if (wordIsPartiallySelected()) {
+                selectWord();
+            } else if (lineIsPartiallySelected()) {
                 selectLine();
             } else if (lineIsFullySelectedAndIsAlsoAParagraph()) {
                 selectDocument();
@@ -83,59 +92,61 @@ export default class SmartSelectionPluginImpl {
         } else {
             selectDocument();
         }
+        
+        trace_r('-- EOF --');
 
         function nothingIsSelected() {
-            const result = $.isNothingSelected();
-            // console.log('TRACE: nothingIsSelected() ?: ', result);
-            return result;
+            return trace_r($.isNothingSelected());
         }
 
         function selectionIsOnSingleLine() {
-            const result = from.line === to.line;
-            // console.log('TRACE: selectionIsOnSingleLine() ?: ', result);
-            return result;
+            return trace_r(from.line === to.line);
+        }
+
+        function wordIsPartiallySelected() {
+            return trace_r(rangeContainsPartial(word, selection));
         }
 
         function lineIsPartiallySelected() {
-            const result = rangeContainsPartial(line, selection);
-            // console.log('TRACE: lineIsPartiallySelected() ?: ', result);
-            return result;
+            return trace_r(rangeContainsPartial(line, selection));
         }
 
         function lineIsFullySelectedAndIsAlsoAParagraph() {
-            const result = rangeEquals(paragraph, selection);
-            // console.log('TRACE: lineIsFullySelectedAndIsAlsoAParagraph() ?: ', result);
-            return result;
+            return trace_r(rangeEquals(paragraph, selection));
         }
 
         function oneOrMoreParagraphsArePartiallySelected() {
-            const result = rangeContainsPartial(paragraphsFromTo, selection);
-            // console.log('TRACE: oneOrMoreParagraphsArePartiallySelected() ?: ', result);
-            return result;
+            return trace_r(rangeContainsPartial(paragraphsFromTo, selection));
         }
 
+        function selectWord() {
+            trace_r();
+            $.setSelection(word);
+        }
+        
         function selectLine() {
-            // console.log('TRACE: selectLine()');
+            trace_r();
             $.setSelection(line);
         }
 
         function selectParagraph() {
-            // console.log('TRACE: selectParagraph()');
+            trace_r();
             $.setSelection(paragraph);
         }
         
         function selectOneOrMoreParagraphs() {
-            // console.log('TRACE: selectOneOrMoreParagraphs()');
+            trace_r();
             $.setSelection(paragraphsFromTo);
         }
 
         function selectDocument() {
-            // console.log('TRACE: selectDocument()');
+            trace_r();
             $.setSelection(document);
         }
     }
 
     shrinkSelection(): void {
+        trace_r();
         this.checkEditor();
         this.initOriginCursor();
         const $ = this; // Scope variable for nested functions
@@ -143,6 +154,7 @@ export default class SmartSelectionPluginImpl {
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
         const selection = toRange(from, to);
+        const word = this.getWordRange(origin);
         const line = this.getLineRange(origin);
         const paragraph = this.getParagraphRange(origin);
 
@@ -150,7 +162,11 @@ export default class SmartSelectionPluginImpl {
             return;
 
         } else if (selectionIsOnSingleLine()) { // Full or partial
-            restoreOriginCursor();
+            if (wordIsFullyOrPartiallySelected()) {
+                restoreOriginCursor();
+            } else if (lineIsFullyOrPartiallySelected()) {
+                selectWord(); // Could be partial
+            }
 
         } else if (paragraphIsFullyOrPartiallySelected()) { // At least two lines, full or partial, within origin paragraph
             selectLine(); // Could be partial
@@ -159,51 +175,63 @@ export default class SmartSelectionPluginImpl {
             selectParagraph(); // Could be partial
         }
 
+        trace_r('-- EOF --');
+
         function nothingIsSelected() {
-            const result = $.isNothingSelected();
-            // console.log('TRACE: nothingIsSelected() ?: ', result);
-            return result;
+            return trace_r($.isNothingSelected());
         }
 
         function selectionIsOnSingleLine() {
-            const result = from.line === to.line;
-            // console.log('TRACE: selectionIsOnSingleLine() ?: ', result);
-            return result;
+            return trace_r(from.line === to.line);
+        }
+
+        function wordIsFullyOrPartiallySelected() {
+            return trace_r(rangeContains(word, selection));
+        }
+
+        function lineIsFullyOrPartiallySelected() {
+            return trace_r(rangeContains(line, selection));
         }
 
         function paragraphIsFullyOrPartiallySelected() {
-            const result = rangeContains(paragraph, selection);
-            // console.log('TRACE: paragraphIsFullyOrPartiallySelected() ?: ', result);
-            return result;
+            return trace_r(rangeContains(paragraph, selection));
         }
 
         function restoreOriginCursor() {
-            // console.log('TRACE: restoreCursor()');
+            trace_r();
             $.setCursor(origin);
         }
 
+        function selectWord() {
+            trace_r();
+            // If word was partially selected, select only that part
+            // getIntersection will never return null within this context, but I must handle the case (therefor default to word)
+            $.setSelection(getIntersection(word, selection) || word);
+        }
+
         function selectLine() {
-            // console.log('TRACE: selectLine()');
-            $.setSelection(getIntersection(line, selection)); // If line was partially selected, select only that part
+            trace_r();
+            // If line was partially selected, select only that part
+            // getIntersection will never return null within this context, but I must handle the case (therefor default to line)
+            $.setSelection(getIntersection(line, selection) || line);
         }
 
         function selectParagraph() {
-            // console.log('TRACE: selectParagraph()');
-            $.setSelection(getIntersection(paragraph, selection)); // If paragraph was partially selected, select only that part
+            trace_r();
+            // If paragraph was partially selected, select only that part
+            // getIntersection will never return null within this context, but I must handle the case (therefor default to paragraph)
+            $.setSelection(getIntersection(paragraph, selection) || paragraph);
         }
     }
 
     private initOriginCursor(): void {
-        const anchor = this.editor.getCursor('anchor');
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
+        const anchor = this.editor.getCursor('anchor');
         // If origin cursor is not set, nothing is selected, or origin cursor is outside of the selection
-        if (!this.origin ||
-            this.isNothingSelected() ||
-            !rangeContainsPos(toRange(from, to), this.origin)
-        ) {
-            console.log('(re)setting origin cursor to: ', JSON.stringify(anchor));
+        if (!this.origin || this.isNothingSelected() || !rangeContainsPos(toRange(from, to), this.origin)) {
             this.origin = anchor;
+            debug('(re)setting origin cursor to: ', JSON.stringify(anchor));
         }
     }
 
@@ -217,6 +245,10 @@ export default class SmartSelectionPluginImpl {
 
     private setCursor(pos: EditorPosition): void {
         this.editor.setCursor(pos);
+    }
+
+    private getWordRange(pos: EditorPosition): EditorRange {
+        return this.editor.wordAt(pos) || toRange(pos, pos);
     }
 
     private getLineRange(pos: EditorPosition): EditorRange {

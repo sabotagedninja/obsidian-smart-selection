@@ -1,46 +1,52 @@
-import { Editor, MarkdownView, Plugin } from 'obsidian';
-import SmartSelectionPluginImpl from './smart-selection-plugin-impl';
+import { Plugin, MarkdownView, Editor } from 'obsidian';
+import SmartSelectionDelegate from './smart-selection-delegate';
+import { setLoggingEnabled } from './dev-utils';
 
 export default class SmartSelectionPlugin extends Plugin {
 
+  private LOGGING_ENABLED = false; // Disabled for production builds
+
+  private impl = new SmartSelectionDelegate();
+  
   async onload() {
+    console.log('Loading plugin: Smart Selection');
+
+    setLoggingEnabled(this.LOGGING_ENABLED);
 
     this.addCommand({
       id: 'smart-selection-expand',
       name: 'Expand selection',
       callback: () => this.expandSelection()
-      // Not allowd to provide a default hotkey
-      // I propose Ctrl + A
     });
 
     this.addCommand({
       id: 'smart-selection-shrink',
       name: 'Shrink selection',
       callback: () => this.shrinkSelection()
-      // Not allowd to provide a default hotkey
-      // I propose Ctrl + Shift + A
     });
   }
 
-  private impl = new SmartSelectionPluginImpl();
-
   private getActiveEditor(): Editor | null {
-    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!view) return null;
-    return (view as MarkdownView).editor;
+    return this.app.workspace.getActiveViewOfType(MarkdownView)?.editor ?? null;
   }
 
   private expandSelection(): void {
     const editor = this.getActiveEditor();
-    if (!editor) return;
-    this.impl.setEditor(editor);
-    this.impl.expandSelection();
+    if (editor) {
+      this.impl.setEditor(editor);
+      this.impl.expandSelection();
+    } else {
+      console.error('No active Editor');
+    }
   }
 
   private shrinkSelection(): void {
     const editor = this.getActiveEditor();
-    if (!editor) return;
-    this.impl.setEditor(editor);
-    this.impl.shrinkSelection();
+    if (editor) {
+      this.impl.setEditor(editor);
+      this.impl.shrinkSelection();
+    } else {
+      console.error('No active Editor');
+    }
   }
 }

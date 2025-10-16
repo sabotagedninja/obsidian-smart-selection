@@ -18,7 +18,7 @@ describe('Obsidian Editor stub', () => {
         editor.setValue('abc');
         expect(editor.getValue()).toBe('abc');
     });
-    test('setValue/getValue → multi line → '+_('"abc.def"'), () => {
+    test('setValue/getValue → multi line → ' + _('"abc.def"'), () => {
         editor.setValue(_('abc . def'));
         expect(editor.getValue()).toBe(_('abc . def'));
     });
@@ -112,6 +112,27 @@ describe('Obsidian Editor stub', () => {
         expect(editor.offsetToPos(1)).toStrictEqual(toPos(0, 1));
         expect(editor.offsetToPos(6)).toStrictEqual(toPos(1, 2));
     });
-
-
+    /*** Unimplemented methods - not used in this stub - only touched for coverage ***/
+    test('Unimplemented methods → all throw Error("Method not implemented")', () => {
+        const POS = toPos(0, 0);
+        expect(() => editor.getDoc()).toThrow();
+        expect(() => editor.refresh()).toThrow();
+        expect(() => editor.setLine(0, '')).toThrow();
+        expect(() => editor.replaceSelection('')).toThrow();
+        expect(() => editor.replaceRange('', POS)).toThrow();
+        expect(() => editor.listSelections()).toThrow();
+        expect(() => editor.setSelections([])).toThrow();
+        expect(() => editor.focus()).toThrow();
+        expect(() => editor.blur()).toThrow();
+        expect(() => editor.hasFocus()).toThrow();
+        expect(() => editor.getScrollInfo()).toThrow();
+        expect(() => editor.scrollTo()).toThrow();
+        expect(() => editor.scrollIntoView(toRange(POS, POS))).toThrow();
+        expect(() => editor.undo()).toThrow();
+        expect(() => editor.redo()).toThrow();
+        expect(() => editor.exec('goUp')).toThrow();
+        expect(() => editor.transaction({})).toThrow();
+        expect(() => editor.processLines(jest.fn(), jest.fn(), false)).toThrow();
+    });
 });
+

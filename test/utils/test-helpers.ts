@@ -1,13 +1,22 @@
-import SmartSelectionPluginImpl from 'src/smart-selection-plugin-impl';
+import SmartSelectionDelegate from 'src/smart-selection-delegate';
 
 
 /**
- * Remove spaces and replace `.` with `\n` in `str`. 
+ * Trim lines and replace `.` with `\n` in `str`. 
+ * Spaces around cursors at start and end of line are also trimmed, e.g. " | a " → "|a" and " a | " → "a|"
+ * Spaces around cursors inside a line are kept as-is, e.g. " | ab ^ c | " → "|ab ^ c|"
+ * 
  * Enables you to use strings in tests that are more readable. 
- * e.g. `abc . def .. ghi` → `abc\ndef\n\nghi`
+ * e.g. `| Line 1 ^ . Line 2 | .. Line 3` → `|Line 1^\nLine 2|\n\nLine 3`
  */
 export function _(str: string): string {
-  return str.replace(/\s/g, '').replace(/\./g, '\n');
+  return str
+        .split('.')
+        .map(line => line
+            .trim()
+            .replace(/^([\|\^])\s+/g, '$1') // Trim "| a" → "|a" and "^ a" → "^a" (at start of line)
+            .replace(/\s+([\|\^])$/g, '$1') // Trim "a |" → "a|" and "a ^" → "a^" (at end of line)
+        ).join('\n');
 }
 
 type CursorIndexes = {
@@ -17,7 +26,6 @@ type CursorIndexes = {
 }
 
 /**
- * 
  * Valid cursor configurations:
  *   '|abc'     Caret (blinking cursor)
  *   '|abc|'    Selection
@@ -71,17 +79,17 @@ export function removeCursorSymbols(str: string): string {
     return str.replace(/[|^]/g, '',)
 }
 
-export function expandSelection(plugin: SmartSelectionPluginImpl, textWithCursors: string, numberOfTimesToExpand: number = 1): string {
+export function expandSelection(plugin: SmartSelectionDelegate, textWithCursors: string, numberOfTimesToExpand: number = 1): string {
     const expandFn = () => { plugin.expandSelection(); };
     return expandOrShrinkSelection(plugin, textWithCursors, numberOfTimesToExpand, expandFn);
 }
 
-export function shrinkSelection(plugin: SmartSelectionPluginImpl, textWithCursors: string, numberOfTimesToShrink: number = 1): string {
+export function shrinkSelection(plugin: SmartSelectionDelegate, textWithCursors: string, numberOfTimesToShrink: number = 1): string {
     const shrinkFn = () => { plugin.shrinkSelection(); };
     return expandOrShrinkSelection(plugin, textWithCursors, numberOfTimesToShrink, shrinkFn);
 }
 
-function expandOrShrinkSelection(plugin: SmartSelectionPluginImpl, textWithCursors: string, numberOfTimes: number = 1, expandOrShrinkFunction: Function): string {
+function expandOrShrinkSelection(plugin: SmartSelectionDelegate, textWithCursors: string, numberOfTimes: number = 1, expandOrShrinkFunction: Function): string {
     // TODO add some explaining comments
     const cursors = findCursorIndexes(textWithCursors);
     const text = removeCursorSymbols(textWithCursors);

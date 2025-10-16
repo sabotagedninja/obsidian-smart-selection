@@ -1,7 +1,7 @@
 import { _, findCursorIndexes, removeCursorSymbols } from "./test-helpers"
 
 describe('Test helper functions', () => {
-    describe('findCursorIndexes', () => {
+    describe('Function: findCursorIndexes', () => {
         describe('Valid cursor configurations', () => {
             test('Caret (or blinking cursor) - no selection', () => {
                 expect(findCursorIndexes('a|bc')).toStrictEqual({ anchor: 1 });
@@ -34,12 +34,23 @@ describe('Test helper functions', () => {
             });
         });
     });
-    test('removeCursorSymbols', () => {
+    test('Function: removeCursorSymbols', () => {
         expect(removeCursorSymbols('|a^bc|')).toBe('abc');
     });
-    describe('Remove spaces and replace . with \n', () => {
-        test('_', () => {
-            expect(_('abc . def .. ghi')).toBe('abc\ndef\n\nghi');
+    describe('Function: _', () => {
+        test('Trim lines (remove spaces) and replace . with \n', () => {
+            expect(_('  Line 1 . Line 2  ')).toBe('Line 1\nLine 2');
+            expect(_('Line 1 . Line 2')).toBe('Line 1\nLine 2');
+            expect(_('Line 1 .  . Line 2')).toBe('Line 1\n\nLine 2');
+            expect(_('Line 1 . Line 2 .. Line 3')).toBe('Line 1\nLine 2\n\nLine 3');
+        });
+        test('Spaces around cursors at start and end of line are trimmed', () => {
+            expect(_('| Line 1 . Line 2 |')).toBe('|Line 1\nLine 2|');
+            expect(_('| Line 1 . Line 2 ^')).toBe('|Line 1\nLine 2^');
+            expect(_('^ Line 1 . Line 2 |')).toBe('^Line 1\nLine 2|');
+        });
+        test('Spaces around cursors inside a line are kept as-is', () => {
+            expect(_('| Li ^ ne 1 . Line 2 |')).toBe('|Li ^ ne 1\nLine 2|');
         });
     });
 });
