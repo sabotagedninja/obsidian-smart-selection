@@ -7,7 +7,7 @@ It lets you expand or shrink selections step by step — from cursor to a single
 
 16-10-2025 — New release **[0.7.0](https://github.com/sabotagedninja/obsidian-smart-selection/releases/tag/0.7.0)** is out now!
 
-Awaiting review and inclusion into the official community plugins list — exciting :D
+Awaiting review and inclusion into the official community plugins list — exciting 😄
 
 ## ✨ Features
 
