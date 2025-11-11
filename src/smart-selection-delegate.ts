@@ -17,10 +17,11 @@ import {
     getUnion
 } from './functions'
 import { debug, trace_r } from './dev-utils';
+import { Graph, Node } from './ast-processor';
 
 export default class SmartSelectionDelegate {
-
     private editor: Editor;
+    private graph: Graph | null;
     private origin: EditorPosition;
 
     getEditor(): Editor {
@@ -29,6 +30,14 @@ export default class SmartSelectionDelegate {
 
     setEditor(editor: Editor): void {
         this.editor = editor;
+    }
+
+    getGraph(): Graph | null {
+        return this.graph;
+    }
+
+    setGraph(graph: Graph | null) {
+        this.graph = graph;
     }
 
     private checkEditor() {
@@ -59,7 +68,19 @@ export default class SmartSelectionDelegate {
         const paragraphsFromTo = getUnion(paragraphFrom, paragraphTo);
         const document = this.getDocumentRange();
 
-        if (nothingIsSelected()) {
+        if (this.graph) {
+            // Use the graph to make smarter selection expansions based on the document structure
+            const node = this.graph.getNodeAtPosition(origin);
+            debug('Node at origin: ', node);
+            if (node) {
+                const range = toRange(
+                    this.editor.offsetToPos(node.from),
+                    this.editor.offsetToPos(node.to)
+                );
+                $.setSelection(range);
+            }
+        } else {
+            if (nothingIsSelected()) {
             selectWord();
             if (nothingIsSelected()) { // Blank line
                 // TODO what is the next logical step?
@@ -71,30 +92,31 @@ export default class SmartSelectionDelegate {
                     }
                 }
             }
-
-            // Something is selected
-        } else if (selectionIsOnSingleLine()) {
-            if (wordIsPartiallySelected()) {
-                selectWord();
-            } else if (lineIsPartiallySelected()) {
-                selectLine();
-            } else if (lineIsFullySelectedAndIsAlsoAParagraph()) {
-                selectDocument();
+            
+                // Something is selected
+            } else if (selectionIsOnSingleLine()) {
+                if (wordIsPartiallySelected()) {
+                    selectWord();
+                } else if (lineIsPartiallySelected()) {
+                    selectLine();
+                } else if (lineIsFullySelectedAndIsAlsoAParagraph()) {
+                    selectDocument();
+                } else {
+                    selectParagraph();
+                }
+                
+                // Selection spans multiple lines
+            } else if (oneOrMoreParagraphsArePartiallySelected()) { // Not fully!
+                selectOneOrMoreParagraphs();
+                
+                // One or more paragraphs are fully selected
             } else {
-                selectParagraph();
+                selectDocument();
             }
-
-            // Selection spans multiple lines
-        } else if (oneOrMoreParagraphsArePartiallySelected()) { // Not fully!
-            selectOneOrMoreParagraphs();
-
-            // One or more paragraphs are fully selected
-        } else {
-            selectDocument();
         }
         
         trace_r('-- EOF --');
-
+        
         function nothingIsSelected() {
             return trace_r($.isNothingSelected());
         }

@@ -2,14 +2,15 @@ import type { Editor, EditorPosition, EditorSelection, EditorSelectionOrCaret, E
 
 /**
  * Barebones/partial implementation of the Obsidian Editor type, build for 
- * testing the Smart Selection plugin.
+ * testing the Smart Selection plugin. 
+ * 
+ * Only the methods that are actually used in the plugin are implemented.
  * 
  * Bare in mind that these methods have the bare minimum to no error checking.
- * During normal use, a selection range can never overflow the text that it 
- * has to select. It's practically kept in sync that way. 
+ * During normal use, a selection range can never overflow the text in the document. 
+ * It's practically kept in sync that way. 
  * 
- * In unit tests though, you can of course set incompatible values. 
- * Don't do that! You'll make Elmo cry :'(
+ * In unit tests though, you can set incompatible values. Keep that in mind.
  */
 export default class EditorStub implements Editor {
 

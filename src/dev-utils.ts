@@ -25,10 +25,13 @@ export function log(message?: any, ...optionalParams: any[]): void {
     }
 }
 
-export function trace_r<T>(obj?: T): T {
+export function trace_r<T>(obj?: T, ...optionalParams: any[]): T {
     if (logging_enabled) {
-        const msg = (obj !== undefined) ? ': ' + obj : '';
-        console.debug('TRACE:', getCallerName(trace_r), msg);
+        if(obj !== undefined) {
+            console.debug('TRACE:', getCallerName(trace_r), ': ', obj, ...optionalParams);
+        } else {
+            console.debug('TRACE:', getCallerName(trace_r));
+        }
     }
     return obj as T;
 }

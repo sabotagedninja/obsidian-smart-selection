@@ -9,7 +9,15 @@
     "version": "node version-bump.mjs && git add manifest.json versions.json",
     "test": "jest --watchAll"
   },
-  "keywords": ["smart", "selection", "select", "expand", "shrink", "grow", "contract"],
+  "keywords": [
+    "smart",
+    "selection",
+    "select",
+    "expand",
+    "shrink",
+    "grow",
+    "contract"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
@@ -27,6 +35,7 @@
     "typescript": "4.7.4"
   },
   "dependencies": {
+    "@codemirror/language": "^6.11.3",
     "ts-node": "^10.9.2"
   }
 }
