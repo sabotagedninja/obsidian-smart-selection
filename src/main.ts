@@ -1,26 +1,21 @@
 import { Plugin, MarkdownView, Editor } from 'obsidian';
 import SmartSelectionDelegate from './smart-selection-delegate';
-import { setLoggingEnabled } from './dev-utils';
 
 export default class SmartSelectionPlugin extends Plugin {
-
-  private LOGGING_ENABLED = false; // Disabled for production builds
 
   private impl = new SmartSelectionDelegate();
   
   async onload() {
-    console.log('Loading plugin: Smart Selection');
-
-    setLoggingEnabled(this.LOGGING_ENABLED);
+    console.debug('Loading plugin: Smart Selection');
 
     this.addCommand({
-      id: 'smart-selection-expand',
+      id: 'expand',
       name: 'Expand selection',
       callback: () => this.expandSelection()
     });
 
     this.addCommand({
-      id: 'smart-selection-shrink',
+      id: 'shrink',
       name: 'Shrink selection',
       callback: () => this.shrinkSelection()
     });
