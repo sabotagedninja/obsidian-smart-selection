@@ -2,21 +2,14 @@ import { Editor, EditorPosition, EditorRange } from 'obsidian';
 import {
     toPos, 
     toRange, 
-    toSelection, 
-    posEquals, 
-    posGTE, 
-    posGT, 
-    posLTE, 
-    posLT, 
     rangeEquals, 
     rangeContains, 
     rangeContainsPartial, 
     rangeContainsPos, 
-    rangeIntersects, 
     getIntersection, 
     getUnion
 } from './functions'
-import { debug, trace_r } from './dev-utils';
+import { trace_r } from './dev-utils';
 
 export default class SmartSelectionDelegate {
 
@@ -46,7 +39,6 @@ export default class SmartSelectionDelegate {
         trace_r();
         this.checkEditor();
         this.initOriginCursor();
-        const $ = this; // Scope variable for nested functions
         const origin = this.origin;
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
@@ -96,7 +88,7 @@ export default class SmartSelectionDelegate {
         trace_r('-- EOF --');
 
         function nothingIsSelected() {
-            return trace_r($.isNothingSelected());
+            return trace_r(this.isNothingSelected());
         }
 
         function selectionIsOnSingleLine() {
@@ -121,27 +113,27 @@ export default class SmartSelectionDelegate {
 
         function selectWord() {
             trace_r();
-            $.setSelection(word);
+            this.setSelection(word);
         }
         
         function selectLine() {
             trace_r();
-            $.setSelection(line);
+            this.setSelection(line);
         }
 
         function selectParagraph() {
             trace_r();
-            $.setSelection(paragraph);
+            this.setSelection(paragraph);
         }
         
         function selectOneOrMoreParagraphs() {
             trace_r();
-            $.setSelection(paragraphsFromTo);
+            this.setSelection(paragraphsFromTo);
         }
 
         function selectDocument() {
             trace_r();
-            $.setSelection(document);
+            this.setSelection(document);
         }
     }
 
@@ -149,7 +141,6 @@ export default class SmartSelectionDelegate {
         trace_r();
         this.checkEditor();
         this.initOriginCursor();
-        const $ = this; // Scope variable for nested functions
         const origin = this.origin;
         const from = this.editor.getCursor('from');
         const to = this.editor.getCursor('to');
@@ -178,7 +169,7 @@ export default class SmartSelectionDelegate {
         trace_r('-- EOF --');
 
         function nothingIsSelected() {
-            return trace_r($.isNothingSelected());
+            return trace_r(this.isNothingSelected());
         }
 
         function selectionIsOnSingleLine() {
@@ -199,28 +190,28 @@ export default class SmartSelectionDelegate {
 
         function restoreOriginCursor() {
             trace_r();
-            $.setCursor(origin);
+            this.setCursor(origin);
         }
 
         function selectWord() {
             trace_r();
             // If word was partially selected, select only that part
             // getIntersection will never return null within this context, but I must handle the case (therefor default to word)
-            $.setSelection(getIntersection(word, selection) || word);
+            this.setSelection(getIntersection(word, selection) || word);
         }
 
         function selectLine() {
             trace_r();
             // If line was partially selected, select only that part
             // getIntersection will never return null within this context, but I must handle the case (therefor default to line)
-            $.setSelection(getIntersection(line, selection) || line);
+            this.setSelection(getIntersection(line, selection) || line);
         }
 
         function selectParagraph() {
             trace_r();
             // If paragraph was partially selected, select only that part
             // getIntersection will never return null within this context, but I must handle the case (therefor default to paragraph)
-            $.setSelection(getIntersection(paragraph, selection) || paragraph);
+            this.setSelection(getIntersection(paragraph, selection) || paragraph);
         }
     }
 
@@ -231,7 +222,7 @@ export default class SmartSelectionDelegate {
         // If origin cursor is not set, nothing is selected, or origin cursor is outside of the selection
         if (!this.origin || this.isNothingSelected() || !rangeContainsPos(toRange(from, to), this.origin)) {
             this.origin = anchor;
-            debug('(re)setting origin cursor to: ', JSON.stringify(anchor));
+            console.debug('(re)setting origin cursor to: ', JSON.stringify(anchor));
         }
     }
 
@@ -239,7 +230,7 @@ export default class SmartSelectionDelegate {
         return !this.editor.somethingSelected();
     }
 
-    private setSelection(range: EditorRange) {
+    private setSelection(range: EditorRange): void {
         this.editor.setSelection(range.from, range.to);
     }
 
