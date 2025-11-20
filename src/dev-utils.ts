@@ -8,6 +8,7 @@ export function trace_r<T>(obj?: T): T {
     return obj as T;
 }
 
+// @ts-ignore 
 export function getCallerName(ignoredFn?: Function): string {
     const unknown = '<unknown>';
     try {
